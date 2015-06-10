@@ -550,14 +550,6 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         tableModel.setRowCount(0);
     }
     
-    public void showServerlistReactive() {
-        if (internet.isSelected()) {
-            browser.getNewServerListAsObservable().subscribe(x -> { 
-                addServerToTable(x);
-            });
-        }
-    }
-    
     public void showServerlist() {       
         if (internet.isSelected()) {
             setupTableData(browser.getServerList());
@@ -570,8 +562,9 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    browser.getNewServerList();
-                    showServerlist();
+                    browser.getNewServerListAsObservable().subscribe(x -> {
+                        addServerToTable(x);
+                    });
                     btnGetServers.setEnabled(true);
                 }
             };
