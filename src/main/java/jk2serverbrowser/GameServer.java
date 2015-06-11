@@ -18,7 +18,7 @@ public class GameServer {
         hostname = ip.toString();
     }
     
-    public void setServerStatus(String[] array) {
+    public void setServerStatus(String[] array) {       
         String[] serverStatus = array[1].split("\\\\");
         for (int i = 0; i < serverStatus.length; i++) {
             switch (serverStatus[i]) {

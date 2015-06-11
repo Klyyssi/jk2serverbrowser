@@ -10,11 +10,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import rx.Observable;
+import java.util.stream.*;
 
 /**
  *
@@ -51,8 +49,26 @@ public class ServerBrowser {
         this.protocol = protocol;
     }
     
-        public Observable<GameServer> getNewServerListAsObservable() {
-        servers.clear();
+    public Observable<GameServer> getNewList() {
+        return Observable.create(x -> {
+            new Thread(() -> {
+                queryMasterServer().parallelStream().forEach(ip -> { 
+                    if (!x.isUnsubscribed()) {                   
+                        try {     
+                            x.onNext(queryGameServer(ip));
+                        } catch (IOException ex) {
+                            System.out.println(" - no answer from " + ip);
+                        }
+                    }
+                });
+                
+                x.onCompleted();
+            }).start();
+        });
+    }
+    
+    private List<InetSocketAddress> queryMasterServer() {
+        List<InetSocketAddress> ipList = new ArrayList<>();
         try (DatagramSocket server = new DatagramSocket(); BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {   
             server.setSoTimeout(5000);            
             byte[] protocolAsArray = protocol.getBytes();            
@@ -60,65 +76,28 @@ public class ServerBrowser {
             byte message[] = { (byte) 0xff, (byte)0xff,(byte)0xff,(byte)0xff,0x67,0x65,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x73,0x20,protocolAsArray[0],protocolAsArray[1] };
             send(server, message, masterserver.getAddress(), masterserver.getPort());           
             byte[] array = receive(server);
-            List<InetSocketAddress> ipList = parseIpAddresses(array, server, new ArrayList<InetSocketAddress>());
+            ipList = parseIpAddresses(array, server, new ArrayList<>());
             System.out.println("Masterserver (" +masterserver.getAddress() +") listed " +ipList.size() + " ip addresses"); 
-            parseServers(ipList);                      
-            servers.removeAll(Collections.singleton(null));
-            return Observable.from(servers);
+            return ipList;
         }  catch (SocketException ex) {
             System.err.println(" - Disconnected");
         } catch (IOException io) {
             System.err.println(" - No response from " +masterserver.getAddress());
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ServerBrowser.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NullPointerException npe) {
             System.err.println(" - Couldn't send anything. Check your internet connection.");
         }
-        return null;
-    } 
+        return ipList;
+    }  
     
-    public List<GameServer> getNewServerList() {
-        servers.clear();
-        try (DatagramSocket server = new DatagramSocket(); BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {   
-            server.setSoTimeout(5000);            
-            byte[] protocolAsArray = protocol.getBytes();            
-            //message = getservers 16 (or other protocol)
-            byte message[] = { (byte) 0xff, (byte)0xff,(byte)0xff,(byte)0xff,0x67,0x65,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x73,0x20,protocolAsArray[0],protocolAsArray[1] };
-            send(server, message, masterserver.getAddress(), masterserver.getPort());           
-            byte[] array = receive(server);
-            List<InetSocketAddress> ipList = parseIpAddresses(array, server, new ArrayList<InetSocketAddress>());
-            System.out.println("Masterserver (" +masterserver.getAddress() +") listed " +ipList.size() + " ip addresses"); 
-            parseServers(ipList);                      
-            servers.removeAll(Collections.singleton(null));
-            return servers;
-        }  catch (SocketException ex) {
-            System.err.println(" - Disconnected");
-        } catch (IOException io) {
-            System.err.println(" - No response from " +masterserver.getAddress());
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ServerBrowser.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NullPointerException npe) {
-            System.err.println(" - Couldn't send anything. Check your internet connection.");
-        }
-        return null;
-    }      
-    
-    private void parseServers(List<InetSocketAddress> ipList) throws InterruptedException {
-        List<Thread> threads = new ArrayList<>();
-        List<GameServer> servList = Collections.synchronizedList(new ArrayList()); //thread-safe
-        
-        for (InetSocketAddress ip : ipList) {
-            ServerInfoGetter sig = new ServerInfoGetter(ip, servList);
-            Thread t = new Thread(sig);
-            threads.add(t);
-            t.start();           
-        }
-        
-        for (Thread t : threads) {
-            t.join();           
-        }
-        
-        servers.addAll(servList);
+    public GameServer queryGameServer(InetSocketAddress ip) throws IOException {
+        long latency = System.currentTimeMillis();
+        String[] serverInfo = getServerStatus(ip);
+        latency = System.currentTimeMillis() - latency;
+        GameServer s = new GameServer(ip); 
+        if (serverInfo.length > 1)
+            s.setServerStatus(serverInfo);
+        s.setPing(latency);
+        return s;
     }
     
     private List<InetSocketAddress> parseIpAddresses(byte[] array, DatagramSocket server, List<InetSocketAddress> ipList) throws IOException {
@@ -169,16 +148,9 @@ public class ServerBrowser {
         return dataIn;
     }
     
-    private String receiveAsString(DatagramSocket server) throws IOException {
-        byte[] dataIn = new byte[2048];
-        DatagramPacket packetIn = new DatagramPacket(dataIn, dataIn.length);
-        server.receive(packetIn);     
-        return new String(packetIn.getData(), "UTF-8");
+    private String receiveAsString(DatagramSocket server) throws IOException {   
+        return new String(receive(server), "UTF-8");
     }    
-    
-    public List<GameServer> getServerList() {
-        return servers;
-    }   
     
     private String[] getServerInfo(InetSocketAddress serverIp) throws IOException {
         //message = (ff ff ff ff) getinfo xxx
@@ -211,30 +183,4 @@ public class ServerBrowser {
     public InetSocketAddress getMasterserver() {
         return masterserver;
     }       
-    
-    class ServerInfoGetter implements Runnable {
-
-        private InetSocketAddress ip;
-        private List<GameServer> list;
-        
-        public ServerInfoGetter(InetSocketAddress ip, List<GameServer> list) {
-            this.ip = ip;
-            this.list = list;
-        }
-        
-        @Override
-        public void run()  {
-            try {
-                long latency = System.currentTimeMillis();
-                String[] serverInfo = getServerStatus(ip);
-                latency = System.currentTimeMillis() - latency;
-                GameServer s = new GameServer(ip); 
-                s.setServerStatus(serverInfo);
-                s.setPing(latency);
-                list.add(s);
-            } catch (IOException ex) {
-                System.err.println(" - Couldn't reach server " +ip);
-            }
-        }         
-    }
 }

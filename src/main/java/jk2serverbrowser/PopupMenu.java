@@ -68,7 +68,7 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
         } else if (clicked == deleteFavourite) {
             favourites.remove(maingui.getSelectedServer());
             maingui.clearTable();
-            maingui.showServerlist();
+            //maingui.showServerlist();
         }
     }
 

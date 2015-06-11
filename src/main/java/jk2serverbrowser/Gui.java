@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -93,6 +94,7 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
     private JRadioButton botfilter, emptyfilter;
     private List<ServerGuard> serverGuards = new ArrayList<>();
     private List<GameServer> favourites = new ArrayList<>();
+    private List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());
     private PopupMenu popupMenu;
     
     private String customMasterIP = "";
@@ -550,26 +552,15 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         tableModel.setRowCount(0);
     }
     
-    public void showServerlist() {       
-        if (internet.isSelected()) {
-            setupTableData(browser.getServerList());
-        } else {
-            setupTableData(favourites);
-        }
-    }
-    
     private void getNewServerList() {
-        Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    browser.getNewServerListAsObservable().subscribe(x -> {
-                        addServerToTable(x);
-                    });
-                    btnGetServers.setEnabled(true);
-                }
-            };
-            Thread t = new Thread(r);
-            t.start();
+        //check if internet or favourites
+        servers.clear();
+        browser.getNewList().subscribe(x -> {       
+                servers.add(x);
+                addServerToTable(x);
+            
+        }); 
+        btnGetServers.setEnabled(true);
     }
 
     @Override
@@ -717,7 +708,7 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         }
     }
     
-    public void addServerToTable(GameServer s) {
+    public synchronized void addServerToTable(GameServer s) {
         if (s == null) return;
 
         DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
@@ -775,7 +766,7 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         if (selectedRow == -1) { btnJoin.setEnabled(false); return; }
         btnJoin.setEnabled(true);
         if (internet.isSelected())
-            selectedServer = browser.getServerList().get(table.convertRowIndexToModel(selectedRow));
+            selectedServer = servers.get(table.convertRowIndexToModel(selectedRow));
         else
             selectedServer = favourites.get(table.convertRowIndexToModel(selectedRow));
         //System.out.println(selectedServer);
