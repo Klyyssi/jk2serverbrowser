@@ -26,7 +26,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -52,6 +54,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
+import rx.Observer;
+import rx.Subscription;
 import settings.SettingsManager;
 
 /**
@@ -94,12 +98,14 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
     private JRadioButton botfilter, emptyfilter;
     private List<ServerGuard> serverGuards = new ArrayList<>();
     private List<GameServer> favourites = new ArrayList<>();
-    private List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());
     private PopupMenu popupMenu;
     
     private String customMasterIP = "";
     private int customMasterPortJO = 28060;
     private int customMasterPortJA = 29060;
+    
+    private List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());
+    private Subscription refreshList;
 
     @Override
     public void windowOpened(WindowEvent e) {
@@ -553,16 +559,20 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
     }
     
     private void getNewServerList() {
-        //check if internet or favourites
+        if (refreshList != null) {
+            refreshList.unsubscribe();
+        }
+
         servers.clear();
-        browser.getNewList().subscribe(x -> {       
-                servers.add(x);
-                addServerToTable(x);
-            
-        }); 
+
+        refreshList = browser.getNewList().subscribe(x -> {
+            servers.add(x);
+            addServerToTable(x);
+        });
+
         btnGetServers.setEnabled(true);
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();

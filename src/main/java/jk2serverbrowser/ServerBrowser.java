@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
 import java.util.stream.*;
+import rx.Observer;
 
 /**
  *
