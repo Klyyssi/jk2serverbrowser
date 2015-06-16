@@ -372,12 +372,15 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
             btnGetServers.setText("Get servers");
             popupMenu.setDeleteFavourite(false);
             clearTable();
+            getNewServerList();
         });
         
         favourite.addActionListener(x -> {
             btnGetServers.setText("Refresh");
             popupMenu.setDeleteFavourite(true);
             clearTable();
+            controller.refreshFavourites();
+            setupTableData(controller.getFavourites());
         });
         
         serverlistSelectionPanel.setBorder(border3);
