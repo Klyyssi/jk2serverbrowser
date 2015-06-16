@@ -1,15 +1,13 @@
 
 package jk2serverbrowser;
 
-import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.List;
-import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.WindowConstants;
 
 /**
  * Context menu for mouse2-click on server table
@@ -21,12 +19,10 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
     private JMenuItem favourite;
     private JMenuItem deleteFavourite;
     private Gui maingui;
-    private ServerBrowser browser;
-    private List<GameServer> favourites;
+    private MainController controller;
     
-    public PopupMenu(Gui gui, ServerBrowser browser, List<GameServer> favourites) {
-        this.browser = browser;
-        this.favourites = favourites;
+    public PopupMenu(Gui gui, MainController controller) {
+        this.controller = controller;
         maingui = gui;
         join = new JMenuItem("Join server");
         guard = new JMenuItem("Add server guard");
@@ -59,14 +55,19 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
             newServerGuard();
         } else if (clicked == join) {
             if (maingui.getSelectedServer() != null) {               
-                maingui.joinServer(maingui.getSelectedServer());     
+                try {
+                    maingui.destroyServerGuards();
+                    controller.joinServer(maingui.getSelectedServer(), true); 
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(null, "Couldn't find path to game folder. Please, check your settings.ini.");
+                }
             }
         } else if (clicked == favourite) {
-            if (!favourites.contains(maingui.getSelectedServer())) {
-                favourites.add(maingui.getSelectedServer());
+            if (!controller.getFavourites().contains(maingui.getSelectedServer())) {
+                controller.getFavourites().add(maingui.getSelectedServer());
             }
         } else if (clicked == deleteFavourite) {
-            favourites.remove(maingui.getSelectedServer());
+            controller.getFavourites().remove(maingui.getSelectedServer());
             maingui.clearTable();
             //maingui.showServerlist();
         }
@@ -87,6 +88,6 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
     private void newServerGuard() {
         GameServer s = maingui.getSelectedServer();
         if (s != null) 
-            maingui.addServerGuard(new ServerGuard(s, browser, maingui));
+            maingui.addServerGuard(new ServerGuard(s, controller, maingui));
     }
 }
