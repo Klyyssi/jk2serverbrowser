@@ -26,9 +26,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -44,7 +44,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
-import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -54,33 +53,21 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import rx.Observer;
 import rx.Subscription;
+import settings.Setting;
 import settings.SettingsManager;
 
 /**
  *
  * @author Markus Mulkahainen
  */
-public class Gui extends JPanel implements ActionListener, ListSelectionListener, WindowListener {
+public final class Gui extends JPanel implements ActionListener, ListSelectionListener, WindowListener {
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                createGUI();
-            }
-        });
-    }
-
-    private static void createGUI() {
+    public static void createGUI(MainController controller) {
         JFrame frame = new JFrame("JK2/JKA server browser");
         frame.setPreferredSize(new Dimension(1280,720));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        Gui gui = new Gui();
+        Gui gui = new Gui(controller);
         gui.setOpaque(true);
         frame.addWindowListener(gui);
         frame.setContentPane(gui);
@@ -88,142 +75,78 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         frame.setVisible(true);
     }  
     
-    private SettingsManager settingsManager = new SettingsManager();
     private JTable table, playerTable;
     private final JButton btnGetServers, btnJoin;
     private GameServer selectedServer;
-    private ServerBrowser browser = new ServerBrowser("masterjk2.ravensoft.com", 28060);
-    private String jk2path, jkapath;
-    private boolean jk2 = true;
     private JRadioButton botfilter, emptyfilter;
     private List<ServerGuard> serverGuards = new ArrayList<>();
-    private List<GameServer> favourites = new ArrayList<>();
-    private PopupMenu popupMenu;
-    
-    private String customMasterIP = "";
-    private int customMasterPortJO = 28060;
-    private int customMasterPortJA = 29060;
-    
-    private List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());
+    private final PopupMenu popupMenu;
+   
     private Subscription refreshList;
+    
+    private MainController controller;
 
     @Override
     public void windowOpened(WindowEvent e) {
-        readSettings();
-        readFavourites();
+        setSettings();
         changeMasterserver();
-        getNewServerList();
+        getNewServerList();              
     }
     
-    private void readSettings() {
-        
-        //TODO: replace these old settings with new, like so:
-        settingsManager.loadSettings("settings.ini");
-        settingsManager.printSettings();
-        
-        //and remove this:
-        try {
-            List<String> settings = Files.readAllLines(new File("settings.ini").toPath(), Charset.forName("UTF-8"));
-            for (String s : settings) {
-                if (s.startsWith("#")) continue;
-                String[] pieces = s.replaceAll("\\\\", "/").split(" ?= ?");
-                if (pieces.length != 2) continue;
-                switch (pieces[0]) {
-                    case "version":
-                        switch (pieces[1]) {
-                            case "0":
-                                //jk2 1.04
-                                jk2 = true;
-                                rbtns[0].setSelected(true);
-                                break;
-                            case "1":
-                                //jk2 1.02
-                                jk2 = true;
-                                rbtns[1].setSelected(true);
-                                break;
-                            case "2":
-                                //jka 1.00
-                                jk2 = false;
-                                rbtns[3].setSelected(true);
-                                break;
-                            case "3":
-                                //jka 1.01
-                                jk2 = false;
-                                rbtns[2].setSelected(true);
-                                break;
-                        }
-                        break;
-                    case "JK2path":
-                        jk2path = pieces[1];
-                        break;
-                    case "JKApath":
-                        jkapath = pieces[1];
-                        break;
-                    case "masterserver":
-                        switch (pieces[1]) {
-                            case "1":
-                                ounedMaster.setSelected(true);
-                                break;
-                            case "2":
-                                jkhubMaster.setSelected(true);
-                                break;
-                            case "3":
-                                customMaster.setSelected(true);
-                                break;
-                        }
-                        break;
-                    case "botfilter":
-                        switch (pieces[1]) {
-                            case "1":                                
-                                botfilter.setSelected(true);          
-                                break;
-                            case "2":
-                                emptyfilter.setSelected(true);  
-                                break;
-                        }
-                        changeFilter();
-                        break;
-                    case "Custom masterserver ip":
-                        customMasterIP = pieces[1];
-                        break;
-                    case "Custom masterserver JK:JO port number":
-                        customMasterPortJO = Integer.parseInt(pieces[1]);
-                        break;
-                    case "Custom masterserver JK:JA port number":
-                        customMasterPortJA = Integer.parseInt(pieces[1]);
-                        break;
-                }
+    private void setSettings() {
+        controller.getSettings().getSettings().forEach((x,y) -> {
+            switch (x) {
+                case SELECTED_VERSION:
+                    switch (y) {
+                        case "0":
+                            //jk2 1.04
+                            rbtns[0].setSelected(true);
+                            break;
+                        case "1":
+                            //jk2 1.02
+                            rbtns[1].setSelected(true);
+                            break;
+                        case "2":
+                            //jka 1.00
+                            rbtns[3].setSelected(true);
+                            break;
+                        case "3":
+                            //jka 1.01
+                            rbtns[2].setSelected(true);
+                            break;      
+                    }
+                    break;
+                case SELECTED_MASTERSERVER:
+                    switch (y) {
+                        case "1":
+                            ounedMaster.setSelected(true);
+                            break;
+                        case "2":
+                            jkhubMaster.setSelected(true);
+                            break;
+                        case "3":
+                            customMaster.setSelected(true);
+                            break;
+                    }
+                    break;
+                case SELECTED_BOTFILTER:
+                    switch (y) {
+                        case "1":                                
+                            botfilter.setSelected(true);          
+                            break;
+                        case "2":
+                            emptyfilter.setSelected(true);  
+                            break;
+                    }
+                    changeFilter();
+                    break;
             }
-        } catch (IOException ex) {
-            System.err.println(" - settings.ini not found, using default settings");
-        }
-    }
-    
-    private void readFavourites() {
-        try {
-            List<String> favs = Files.readAllLines(new File("favourites.txt").toPath(), Charset.forName("UTF-8"));
-            for (String s : favs) {                
-                String[] pieces = s.split(":");
-                InetSocketAddress isa = new InetSocketAddress(pieces[0], Integer.parseInt(pieces[1]));
-                GameServer g = new GameServer(isa);   
-                favourites.add(g);
-            }
-        } catch (IOException ex) {
-            System.err.println(" - favourites.txt not found");
-        }
+        });
     }
 
     @Override
     public void windowClosing(WindowEvent e) { 
-        try {
-            try (PrintWriter writer = new PrintWriter("favourites.txt", "UTF-8")) {
-                for (GameServer s : favourites) {
-                    writer.println(s.getIp().getAddress().getHostAddress() +":" +s.getIp().getPort());
-                }
-            }
-        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
-            System.err.println(" - Couldn't save favourites");
-        }
+        controller.trySaveFavourites();
     }
 
     @Override
@@ -277,8 +200,11 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
     
     private TableRowSorter sorter;
     
-    public Gui() {
+    public Gui(MainController controller) {
         super(new BorderLayout());
+        
+        this.controller = controller;
+        
         String col[] = {"Server name", "Players", "Map", "Gametype", "Mod", "Ping"};
         DefaultTableModel tableModel = new DefaultTableModel(col, 0);        
         
@@ -312,7 +238,7 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         sorter.setComparator(1, new IntComparator());      
         sorter.setComparator(5, new IntComparator());
         table.setRowSorter(sorter);
-        popupMenu = new PopupMenu(this, browser, favourites);
+        popupMenu = new PopupMenu(this, controller);
         table.setComponentPopupMenu(popupMenu);
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -342,9 +268,26 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         btnGetServers = new JButton("Get servers");
         btnJoin = new JButton("Join");
         btnJoin.setEnabled(false);
-        btnGetServers.setEnabled(false);
-        addActionListeners(btnGetServers);
-        addActionListeners(btnJoin);
+        
+        btnGetServers.addActionListener(x -> {
+                if (internet.isSelected()) {
+                    clearTable();
+                    getNewServerList();
+                } else {
+                    clearTable();
+                    controller.refreshFavourites();
+                    setupTableData(controller.getFavourites());
+                }
+        });
+        
+        btnJoin.addActionListener(x -> {
+            destroyServerGuards();
+            try {
+                controller.joinServer(selectedServer, (rbtns[0].isSelected() || rbtns[1].isSelected())); 
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Couldn't find path to game folder. Please, check your settings.ini.");
+            }
+        });
         JPanel rightPanel = new JPanel(new BorderLayout());              
         
         createPlayerTable();
@@ -424,8 +367,19 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         serverlists.add(favourite);
         serverlistSelectionPanel.add(internet);
         serverlistSelectionPanel.add(favourite);
-        favourite.addActionListener(this);
-        internet.addActionListener(this);
+        
+        internet.addActionListener(x -> {
+            btnGetServers.setText("Get servers");
+            popupMenu.setDeleteFavourite(false);
+            clearTable();
+        });
+        
+        favourite.addActionListener(x -> {
+            btnGetServers.setText("Refresh");
+            popupMenu.setDeleteFavourite(true);
+            clearTable();
+        });
+        
         serverlistSelectionPanel.setBorder(border3);
         internet.setSelected(true);
         
@@ -508,6 +462,12 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         rbtns[1].addActionListener(this);
         rbtns[3].addActionListener(this);
         rbtns[2].addActionListener(this);
+        
+        rbtns[0].setActionCommand("JK2_104");
+        rbtns[1].setActionCommand("JK2_102");
+        rbtns[3].setActionCommand("JA_101");
+        rbtns[2].setActionCommand("JA_100");
+        
         rdbtnPanel.add(jk2panel);
         rdbtnPanel.add(jkapanel);
         return rdbtnPanel;
@@ -563,82 +523,27 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
             refreshList.unsubscribe();
         }
 
-        servers.clear();
-
-        refreshList = browser.getNewList().subscribe(x -> {
-            servers.add(x);
+        refreshList = controller.getNewServerList().subscribe(x -> {
             addServerToTable(x);
         });
 
-        btnGetServers.setEnabled(true);
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
         
-        if (o instanceof JButton) {
-            JButton btn = (JButton) o;
-            
-            if (btn == btnGetServers) {
-                if (internet.isSelected()) {
-                    btnGetServers.setEnabled(false);
-                    clearTable();
-                    getNewServerList();
-                } else {
-                    btnGetServers.setEnabled(true);
-                    clearTable();
-                    refreshList(favourites);
-                    setupTableData(favourites);
-                }
-            } else if (btn == btnJoin) {                
-                joinServer(selectedServer);
-            }
-        } else if (o instanceof JRadioButton) {
-            JRadioButton btn = (JRadioButton) o;   
+        if (o instanceof JRadioButton) {
+            JRadioButton btn = (JRadioButton) o;  
             
             if (btn.getText().startsWith("Empty")) {
-                changeFilter(); 
-            } else if (btn == favourite || btn == internet) {
-                if (btn == favourite) {
-                    btnGetServers.setText("Refresh");
-                    popupMenu.setDeleteFavourite(true);
-                } else {
-                    btnGetServers.setText("Get servers");
-                    popupMenu.setDeleteFavourite(false);
-                }
-                clearTable();
+                changeFilter();           
             } else {
                 changeMasterserver();
             }         
         }
     }
-    
-    public void joinServer(GameServer server) {
-        String path = jk2path;
-        if (!jk2) path = jkapath;
-        destroyServerGuards();        
-        try {           
-            String strIp = server.getIp().getAddress().toString();
-            ProcessBuilder builder = new ProcessBuilder( path, "+connect", strIp.substring(strIp.indexOf("/") + 1, strIp.length()) +":" +server.getIp().getPort());                
-            builder.directory( new File(path.substring(0, path.lastIndexOf("/"))) );                    
-            builder.redirectErrorStream(true);
-            Process process =  builder.start();
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(null, "Couldn't find " +path +"! Please, check your settings.ini.");
-        }
-    }
-    
-    private void refreshList(List<GameServer> list) {       
-        for (GameServer s : list) {
-            try {
-                browser.refresh(s);
-            } catch (IOException ex) {
-                System.err.println(" - Couldn't reach server " + s.getIp());
-            }
-        }
-    }
-    
+   
     private void changeFilter() {
         if (botfilter.isSelected()) {
             RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("\\[([1-9]|[0-9]{2,})\\]", 1);
@@ -652,70 +557,45 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
             sorter.setRowFilter(null);        
     }
     
-    private void changeMasterserver() {
-        boolean original = jk2Master.isSelected();
-        boolean ouned = ounedMaster.isSelected();
-        boolean jkhub = jkhubMaster.isSelected();
-        browser.setOriginal(original);
-        for (int i = 0; i < rbtns.length; i++) {
-            JRadioButton btn = rbtns[i];
-            if (btn.isSelected()) {
-                switch (btn.getText()) {
-                    case "1.04":                        
-                        browser.setProtocol("16");
-                        if (original) {
-                            browser.setMasterserver("masterjk2.ravensoft.com", 28060);                          
-                        } else if (ouned) {
-                            browser.setMasterserver("master.ouned.de", 28060);
-                        } else if (jkhub) {
-                            browser.setMasterserver("master.jkhub.org", 28060);
-                        } else {
-                            browser.setMasterserver(customMasterIP, customMasterPortJO);
-                        }
-                        jk2 = true;
-                        break;
-                    case "1.02":
-                        if (original) {
-                            browser.setMasterserver("masterjk2.ravensoft.com", 28060);
-                        } else if (ouned) {
-                            browser.setMasterserver("master.ouned.de", 28060);                    
-                        } else if (jkhub) {
-                            browser.setMasterserver("master.jkhub.org", 28060);
-                        } else {
-                            browser.setMasterserver(customMasterIP, customMasterPortJO);
-                        }
-                        browser.setProtocol("15");
-                        jk2 = true;
-                        break;
-                    case "1.00":
-                        if (original) {
-                            browser.setMasterserver("masterjk3.ravensoft.com", 29060);
-                        } else if (ouned) {
-                            browser.setMasterserver("master.ouned.de", 29060);                            
-                        } else if (jkhub) {
-                            browser.setMasterserver("master.jkhub.org", 29060);
-                        } else {
-                            browser.setMasterserver(customMasterIP, customMasterPortJA);
-                        }
-                        browser.setProtocol("25");
-                        jk2 = false;
-                        break;
-                    case "1.01":
-                        if (original) {
-                            browser.setMasterserver("masterjk3.ravensoft.com", 29060);                           
-                        } else if (ouned) {
-                            browser.setMasterserver("master.ouned.de", 29060);
-                        } else if (jkhub) {
-                            browser.setMasterserver("master.jkhub.org", 29060);
-                        } else {
-                            browser.setMasterserver(customMasterIP, customMasterPortJA);
-                        }
-                        browser.setProtocol("26");
-                        jk2 = false;
-                        break;
-                }
-            }
+    private MasterServer selectionToMasterServer(Tuple<JRadioButton, JRadioButton> selections) {
+        Map<Tuple<JRadioButton, JRadioButton>, MasterServer> map = new HashMap<>();
+        map.put(new Tuple(jk2Master, rbtns[0]), MasterServer.JK2_104_ORIGINAL);
+        map.put(new Tuple(jk2Master, rbtns[1]), MasterServer.JK2_102_ORIGINAL);
+        map.put(new Tuple(jk2Master, rbtns[3]), MasterServer.JA_101_ORIGINAL);
+        map.put(new Tuple(jk2Master, rbtns[2]), MasterServer.JA_100_ORIGINAL);
+        map.put(new Tuple(ounedMaster, rbtns[0]), MasterServer.JK2_104_OUNED);
+        map.put(new Tuple(ounedMaster, rbtns[1]), MasterServer.JK2_102_OUNED);
+        map.put(new Tuple(ounedMaster, rbtns[3]), MasterServer.JA_101_OUNED);
+        map.put(new Tuple(ounedMaster, rbtns[2]), MasterServer.JA_100_OUNED);
+        map.put(new Tuple(jkhubMaster, rbtns[0]), MasterServer.JK2_104_JKHUB);
+        map.put(new Tuple(jkhubMaster, rbtns[1]), MasterServer.JK2_102_JKHUB);
+        map.put(new Tuple(jkhubMaster, rbtns[3]), MasterServer.JA_101_JKHUB);
+        map.put(new Tuple(jkhubMaster, rbtns[2]), MasterServer.JA_100_JKHUB);
+        map.put(new Tuple(customMaster, rbtns[0]), MasterServer.JK2_104_CUSTOM);
+        map.put(new Tuple(customMaster, rbtns[1]), MasterServer.JK2_102_CUSTOM);
+        map.put(new Tuple(customMaster, rbtns[3]), MasterServer.JA_101_CUSTOM);
+        map.put(new Tuple(customMaster, rbtns[2]), MasterServer.JA_100_CUSTOM);
+        
+        return map.get(selections);
+    }
+    
+    private JRadioButton getSelectedMasterServerButton() {
+        if (jk2Master.isSelected()) return jk2Master;
+        else if (ounedMaster.isSelected()) return ounedMaster;
+        else if (jkhubMaster.isSelected()) return jkhubMaster;
+        return customMaster;
+    }
+    
+    private JRadioButton getSelectedVersionButton() {
+        for (JRadioButton btn : rbtns) {
+            if (btn.isSelected()) return btn;
         }
+        
+        return rbtns[0];
+    }
+    
+    private void changeMasterserver() {
+        controller.setMasterServer(selectionToMasterServer(new Tuple(getSelectedMasterServerButton(), getSelectedVersionButton())));
     }
     
     public synchronized void addServerToTable(GameServer s) {
@@ -776,17 +656,16 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         if (selectedRow == -1) { btnJoin.setEnabled(false); return; }
         btnJoin.setEnabled(true);
         if (internet.isSelected())
-            selectedServer = servers.get(table.convertRowIndexToModel(selectedRow));
+            selectedServer = controller.getServers().get(table.convertRowIndexToModel(selectedRow));
         else
-            selectedServer = favourites.get(table.convertRowIndexToModel(selectedRow));
+            selectedServer = controller.getFavourites().get(table.convertRowIndexToModel(selectedRow));
         //System.out.println(selectedServer);
-        try {
-            String[] serverstatus = browser.getServerStatus(selectedServer.getIp());
-            parseServerStatus(serverstatus);
-        } catch (IOException ex) {
-            System.err.println(" - Couldn't reach server " +selectedServer.getIp());
-        }
+        
+        controller.getServerStatus(selectedServer).subscribe(status -> {
+            parseServerStatus(status);
+        });
     }
+    
     
     private void parseServerStatus(String[] array) {
         //mod
@@ -820,7 +699,7 @@ public class Gui extends JPanel implements ActionListener, ListSelectionListener
         }
     }
     
-    private void destroyServerGuards() {
+    public void destroyServerGuards() {
         for (ServerGuard s : serverGuards) {
             s.destroy();
         }

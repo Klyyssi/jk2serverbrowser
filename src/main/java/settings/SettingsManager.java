@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -24,7 +25,7 @@ public class SettingsManager {
          * Map a setting to its value
          */
 	private HashMap<Setting, String> settingsMap = new HashMap<Setting, String>();	
-	
+        
 	public void loadSettings(String file) {
 		File cfgFile = new File(file);
                                 
@@ -55,7 +56,7 @@ public class SettingsManager {
                             
                         }
 		} catch (IOException e) {
-                    System.out.println(file +" not found or a problem while loading - using default settings");
+                    System.out.println(" - " +file +" not found or a problem while loading settings - using default settings");
                     
                     SetDefaultSettings();
 		}
@@ -94,5 +95,9 @@ public class SettingsManager {
 			System.out.println(entry.getKey() + " = " + entry.getValue());
 		}
 	}
+        
+        public Map<Setting, String> getSettings() {
+            return settingsMap;
+        }
 }
 

@@ -46,7 +46,7 @@ import javax.swing.table.TableRowSorter;
 public class ServerGuard extends JFrame implements ActionListener {
     
     private GameServer server;
-    private ServerBrowser browser;
+    private MainController controller;
     private Gui maingui;
     private JPanel mainpanel = new JPanel(new BorderLayout());
     private JPanel bottompanel = new JPanel(new BorderLayout());
@@ -61,12 +61,12 @@ public class ServerGuard extends JFrame implements ActionListener {
     /**
      * Constructor.
      * @param server The server that will be guarded
-     * @param browser This ServerBrowser will be used to contact the server above, and refresh its' information
+     * @param controller This ServerBrowser will be used to contact the server above, and refresh its' information
      * @param gui Main gui is needed in order to join the server
      */
-    public ServerGuard(GameServer server, ServerBrowser browser, Gui gui) {       
+    public ServerGuard(GameServer server, MainController controller, Gui gui) {       
         this.maingui = gui;
-        this.browser = browser;
+        this.controller = controller;
         this.server = server;
         setTitle("Server guard - " +server.getHostnameNoHTML());
         setPreferredSize(new Dimension(640,480));
@@ -172,25 +172,22 @@ public class ServerGuard extends JFrame implements ActionListener {
      * makes the requisite actions.
      */
     private void refreshServer() {
-        try {
-            String[] serverStatus = browser.getServerStatus(server.getIp());
-            ArrayList<String> playerList = parsePlayers(serverStatus);
-            
+        controller.getServerStatus(server).subscribe(x -> {
+            ArrayList<String> playerList = parsePlayers(x);
+
             //Clear the table
             DefaultTableModel tableModel = (DefaultTableModel) playertable.getModel();
             tableModel.setRowCount(0);
             //
-            
+
             setupPlayerTableData(playerList); 
             oldPlayerCount = playerCount;
             playerCount = playertable.getRowCount();
             if (!firstTime && (playerCount - oldPlayerCount > 0))
                 alarm();
-                
+
             firstTime = false;
-        } catch (IOException ex) {
-            System.err.println(" - Server Guard couldn't reach server " +server.getIp());
-        }
+        });
     }
     
     /**
@@ -208,7 +205,12 @@ public class ServerGuard extends JFrame implements ActionListener {
             }
         } 
         else if (rbtnJoin.isSelected()) {
-            maingui.joinServer(server);
+            try {              
+                controller.joinServer(server, true);
+                maingui.destroyServerGuards();
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Couldn't find path to the game folder. Please, check your settings.ini.");
+            }
         }
     }    
     

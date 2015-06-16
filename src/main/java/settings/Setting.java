@@ -11,9 +11,9 @@ public enum Setting {
     
     JK2PATH ("C:\\Games\\Star Wars JK II Jedi Outcast\\GameData\\jk2mp.exe"), 
     JKAPATH ("C:\\Games\\Star Wars Jedi Academy\\GameData\\jkamp.exe"),         
-    DEFAULT_SELECTED_MASTERSERVER ("1"),
-    DEFAULT_SELECTED_VERSION ("0"),
-    DEFAULT_SELECTED_BOTFILTER ("0"),         
+    SELECTED_MASTERSERVER ("1"),
+    SELECTED_VERSION ("0"),
+    SELECTED_BOTFILTER ("0"),         
     CUSTOM_MASTERSERVER_IP ("93.188.162.182"), 
     CUSTOM_MASTERSV_JK2_PORT ("28060"), 
     CUSTOM_MASTERSV_JKA_PORT ("29060"),
