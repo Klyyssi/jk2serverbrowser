@@ -4,7 +4,6 @@ package jk2serverbrowser;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
-import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -14,12 +13,12 @@ import javax.swing.JPopupMenu;
  * @author Markus Mulkahainen
  */
 public class PopupMenu extends JPopupMenu implements MouseListener {
-    private JMenuItem join;
-    private JMenuItem guard;
-    private JMenuItem favourite;
-    private JMenuItem deleteFavourite;
-    private Gui maingui;
-    private MainController controller;
+    private final JMenuItem join;
+    private final JMenuItem guard;
+    private final JMenuItem favourite;
+    private final JMenuItem deleteFavourite;
+    private final Gui maingui;
+    private final MainController controller;
     
     public PopupMenu(Gui gui, MainController controller) {
         this.controller = controller;
@@ -63,13 +62,9 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
                 }
             }
         } else if (clicked == favourite) {
-            if (!controller.getFavourites().contains(maingui.getSelectedServer())) {
-                controller.getFavourites().add(maingui.getSelectedServer());
-            }
+            controller.addToFavourites(maingui.getSelectedServer());
         } else if (clicked == deleteFavourite) {
-            controller.getFavourites().remove(maingui.getSelectedServer());
-            maingui.clearTable();
-            //maingui.showServerlist();
+            controller.removeFromFavourites(maingui.getSelectedServer());
         }
     }
 

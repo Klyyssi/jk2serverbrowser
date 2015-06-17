@@ -6,13 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.JOptionPane;
 import rx.Observable;
 import settings.Setting;
 import settings.SettingsManager;
@@ -24,13 +22,13 @@ import settings.SettingsManager;
 public class MainController {
     
     private final String SETTINGS_FILE = "settings.ini";   
-    private MasterServer masterServer = MasterServer.JK2_104_ORIGINAL;    
-    private final List<GameServer> favourites = new ArrayList<>();  
+    private final List<GameServer> favourites = new ArrayList<>();
     private final List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());   
     private final IGameServerService gameService;
-    private final IMasterServerService masterService;
-    
+    private final IMasterServerService masterService;  
     private SettingsManager settingsManager;
+    private MasterServer masterServer = MasterServer.JK2_104_ORIGINAL;    
+
     
     public MainController(IMasterServerService masterServerService, IGameServerService gameServerService) {
         masterService = masterServerService;
@@ -47,7 +45,7 @@ public class MainController {
         try {
             try (PrintWriter writer = new PrintWriter("favourites.txt", "UTF-8")) {
                 for (GameServer s : favourites) {
-                    writer.println(s.getIp().getAddress().getHostAddress() +":" +s.getIp().getPort());
+                    writer.println(s.getIp() +":" +s.getPort());
                 }
             }
         } catch (FileNotFoundException | UnsupportedEncodingException ex) {
@@ -61,9 +59,8 @@ public class MainController {
             
             for (String s : favs) {                
                 String[] pieces = s.split(":");
-                InetSocketAddress isa = new InetSocketAddress(pieces[0], Integer.parseInt(pieces[1]));
-                GameServer g = new GameServer(isa);   
-                favourites.add(g);
+                String[] emptyServerStatus = new String[] { "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A" };
+                favourites.add(ServerStatusParser.statusToServer(emptyServerStatus, new Tuple(pieces[0], Integer.parseInt(pieces[1]))));
             }
         } catch (IOException ex) {
             System.err.println(" - favourites.txt not found");
@@ -74,10 +71,6 @@ public class MainController {
         return settingsManager;
     }
     
-    public List<GameServer> getFavourites() {
-        return favourites;
-    }
-    
     public List<GameServer> getServers() {
         return servers;
     }
@@ -86,22 +79,44 @@ public class MainController {
         this.masterServer = masterServer;
     }
     
-    public Observable<String[]> getServerStatus(GameServer server) {       
-        return gameService.getServerStatus(new Tuple(server.getIp().getAddress().toString(), server.getIp().getPort()));
+    public void addToFavourites(GameServer server) {
+        if (!favourites.contains(server)) favourites.add(server);
     }
     
-    public void refreshFavourites() {
-        favourites.forEach(server -> {
-            gameService.getServerStatus(new Tuple(server.getIp().getAddress().toString(), server.getIp().getPort())).subscribe(s -> {
-               server.setServerStatus((String[]) s);
-            });
+    public void removeFromFavourites(GameServer server) {
+        favourites.remove(server);
+    }
+    
+    public List<GameServer> getFavourites() {
+        return favourites;
+    }
+    
+    public Observable<String[]> getServerStatus(GameServer server) {       
+        return gameService.getServerStatus(new Tuple(server.getIp(), server.getPort()));
+    }
+    
+    public Observable<GameServer> refreshFavourites() {
+        return Observable.create(subscriber -> {
+            new Thread(() -> {
+                favourites.forEach(x -> {
+                    gameService.getServerStatus(new Tuple(x.getIp(), x.getPort())).subscribe(s -> {
+                        if (!subscriber.isUnsubscribed()) {
+                            subscriber.onNext(ServerStatusParser.statusToServer((String[]) s, new Tuple(x.getIp(), x.getPort())));
+                        }
+                    });
+                });
+                
+                if(!subscriber.isUnsubscribed()) {
+                    subscriber.onCompleted();
+                }
+            }).start();
         });
     }
     
     public void joinServer(GameServer server, boolean jk2) throws IOException {
         String path = jk2 ? settingsManager.getSetting(Setting.JK2PATH) : settingsManager.getSetting(Setting.JKAPATH);                
-        String strIp = server.getIp().getAddress().toString();
-        ProcessBuilder builder = new ProcessBuilder( path, "+connect", strIp.substring(strIp.indexOf("/") + 1, strIp.length()) +":" +server.getIp().getPort());                
+        String strIp = server.getIp();
+        ProcessBuilder builder = new ProcessBuilder( path, "+connect", strIp.substring(strIp.indexOf("/") + 1, strIp.length()) +":" +server.getPort());                
         builder.directory( new File(path.substring(0, path.lastIndexOf("/"))) );
         builder.redirectErrorStream(true);
         Process process =  builder.start();        
@@ -116,7 +131,7 @@ public class MainController {
                     list.parallelStream().forEach(ipTuple -> {
                         if (!subscriber.isUnsubscribed()) {
                             gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
-                                GameServer server = statusToServer(serverStatus, ipTuple);
+                                GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
                                 servers.add(server);
                                 subscriber.onNext(server);
                            });                      
@@ -129,12 +144,5 @@ public class MainController {
                 }
             }).start();
         });
-    }
-    
-    private static GameServer statusToServer(String[] serverStatus, Tuple<String, Integer> ip) {
-        GameServer server = new GameServer(new InetSocketAddress(ip.x, ip.y));
-        server.setServerStatus(serverStatus);
-        return server;
-    }
-    
+    }    
 }

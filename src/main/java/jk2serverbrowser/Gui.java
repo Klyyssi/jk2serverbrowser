@@ -275,8 +275,9 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                     getNewServerList();
                 } else {
                     clearTable();
-                    controller.refreshFavourites();
-                    setupTableData(controller.getFavourites());
+                    controller.refreshFavourites().subscribe(server -> {
+                       addServerToTable(server); 
+                    });
                 }
         });
         
@@ -379,8 +380,9 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
             btnGetServers.setText("Refresh");
             popupMenu.setDeleteFavourite(true);
             clearTable();
-            controller.refreshFavourites();
-            setupTableData(controller.getFavourites());
+            controller.refreshFavourites().subscribe(server -> {
+               this.addServerToTable(server);
+            });
         });
         
         serverlistSelectionPanel.setBorder(border3);
@@ -616,26 +618,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         tableModel.addRow(data);
         
         table.setModel(tableModel);
-    }
-    
-    public void setupTableData(List<GameServer> list) {
-        if (list == null) return;
-        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-        for (GameServer s : list) {
-            Object[] data = new Object[6];
-            if (s == null) 
-                continue;
-            data[0] = s.getHostname();
-            data[1] = s.getClients() +"/" +s.getMaxclients() + " [" +s.getPlayerCount() + "]";
-            data[2] = s.getMapname();
-            data[3] = s.getGametype();
-            data[4] = s.getMod();
-            data[5] = s.getPing();
-            tableModel.addRow(data);
-        }
-        
-        table.setModel(tableModel);
-    }
+    }   
     
     public void setupPlayerTableData(List<String> list) {
         if (list == null) return;
