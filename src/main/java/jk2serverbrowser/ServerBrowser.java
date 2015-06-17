@@ -50,23 +50,23 @@ public class ServerBrowser {
         this.protocol = protocol;
     }
     
-    public Observable<GameServer> getNewList() {
-        return Observable.create(x -> {
-            new Thread(() -> {
-                queryMasterServer().parallelStream().forEach(ip -> { 
-                    if (!x.isUnsubscribed()) {                   
-                        try {     
-                            x.onNext(queryGameServer(ip));
-                        } catch (IOException ex) {
-                            System.out.println(" - no answer from " + ip);
-                        }
-                    }
-                });
-                
-                x.onCompleted();
-            }).start();
-        });
-    }
+//    public Observable<GameServer> getNewList() {
+//        return Observable.create(x -> {
+//            new Thread(() -> {
+//                queryMasterServer().parallelStream().forEach(ip -> { 
+//                    if (!x.isUnsubscribed()) {                   
+//                        try {     
+//                            x.onNext(queryGameServer(ip));
+//                        } catch (IOException ex) {
+//                            System.out.println(" - no answer from " + ip);
+//                        }
+//                    }
+//                });
+//                
+//                x.onCompleted();
+//            }).start();
+//        });
+//    }
     
     private List<InetSocketAddress> queryMasterServer() {
         List<InetSocketAddress> ipList = new ArrayList<>();
@@ -90,16 +90,16 @@ public class ServerBrowser {
         return ipList;
     }  
     
-    public GameServer queryGameServer(InetSocketAddress ip) throws IOException {
-        long latency = System.currentTimeMillis();
-        String[] serverInfo = getServerStatus(ip);
-        latency = System.currentTimeMillis() - latency;
-        GameServer s = new GameServer(ip); 
-        if (serverInfo.length > 1)
-            s.setServerStatus(serverInfo);
-        s.setPing(latency);
-        return s;
-    }
+//    public GameServer queryGameServer(InetSocketAddress ip) throws IOException {
+//        long latency = System.currentTimeMillis();
+//        String[] serverInfo = getServerStatus(ip);
+//        latency = System.currentTimeMillis() - latency;
+//        GameServer s = new GameServer(ip); 
+//        if (serverInfo.length > 1)
+//            s.setServerStatus(serverInfo);
+//        s.setPing(latency);
+//        return s;
+//    }
     
     private List<InetSocketAddress> parseIpAddresses(byte[] array, DatagramSocket server, List<InetSocketAddress> ipList) throws IOException {
         for (int i = firstMark(array); i < array.length; i+=7) {
@@ -166,15 +166,15 @@ public class ServerBrowser {
         }
     }
     
-    public void refresh(GameServer server) throws IOException {
-        long latency = System.currentTimeMillis();                              
-        //message = (ff ff ff ff) getstatus
-        String[] received = sendServer(new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 0x67, 0x65, 0x74, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73 }, server.getIp()).split("\\r?\\n");
-        latency = System.currentTimeMillis() - latency;
-        server.setPing(latency);
-        server.setServerStatus(received);
-        //return received;
-    }
+//    public void refresh(GameServer server) throws IOException {
+//        long latency = System.currentTimeMillis();                              
+//        //message = (ff ff ff ff) getstatus
+//        String[] received = sendServer(new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 0x67, 0x65, 0x74, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73 }, server.getIp()).split("\\r?\\n");
+//        latency = System.currentTimeMillis() - latency;
+//        server.setPing(latency);
+//        server.setServerStatus(received);
+//        //return received;
+//    }
     
     public String[] getServerStatus(InetSocketAddress ip) throws IOException {
         //message = (ff ff ff ff) getstatus
