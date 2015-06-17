@@ -274,10 +274,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                     clearTable();
                     getNewServerList();
                 } else {
-                    clearTable();
-                    controller.refreshFavourites().subscribe(server -> {
-                       addServerToTable(server); 
-                    });
+                    refreshFavourites();
                 }
         });
         
@@ -523,7 +520,16 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         tableModel.setRowCount(0);
     }
     
+    public void refreshFavourites() {
+        clearTable();
+        controller.refreshFavourites().subscribe(server -> {
+           addServerToTable(server); 
+        });
+    }
+    
     private void getNewServerList() {
+        clearTable();
+        
         if (refreshList != null) {
             refreshList.unsubscribe();
         }
