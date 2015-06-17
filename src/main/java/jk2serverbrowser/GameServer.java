@@ -1,7 +1,9 @@
 
 package jk2serverbrowser;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -9,22 +11,21 @@ import java.util.Objects;
  */
 public class GameServer {
     
-    private final String 
-            ip,
-            mod, 
-            force_disable, 
-            weapon_disable, 
-            gametype, 
-            maxclients, 
-            clients, 
-            mapname, 
-            hostname, 
-            ping, 
-            players;
+    private String 
+            mod = "", 
+            force_disable = "", 
+            weapon_disable = "", 
+            gametype = "", 
+            maxclients = "", 
+            clients = "", 
+            mapname = "", 
+            hostname = "", 
+            ping = "";
+    private final int port;    
+    private final String ip;   
+    private final List<Player> players;
     
-    private final int port;
-    
-    public GameServer(String ip, int port, String mod, String force_disable, String weapon_disable, String gametype, String maxclients, String clients, String mapname, String hostname, String ping, String players) {
+    public GameServer(String ip, int port, String mod, String force_disable, String weapon_disable, String gametype, String maxclients, String clients, String mapname, String hostname, String ping, List<Player> players) {
         this.ip = ip;
         this.port = port;
         this.mod = mod;
@@ -101,7 +102,7 @@ public class GameServer {
     }  
     
     public String getPlayerCount() {
-        return players;
+        return Integer.toString(players.stream().filter(x -> !x.getPing().equals("0")).collect(Collectors.toList()).size());
     }   
     
     public String getPing() {
@@ -110,5 +111,9 @@ public class GameServer {
     
     public int getPort() {
         return port;
+    }
+    
+    public List<Player> getPlayers() {
+        return players;
     }
 }

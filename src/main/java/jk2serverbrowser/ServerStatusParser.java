@@ -1,6 +1,9 @@
 
 package jk2serverbrowser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author Markus Mulkahainen
@@ -12,8 +15,23 @@ public class ServerStatusParser {
     
     public static GameServer statusToServer(String[] serverStatus, Tuple<String, Integer> ip) {
         String[] parsedStatus = parseStatus(serverStatus);       
-        return new GameServer(ip.x, ip.y, parsedStatus[0], parsedStatus[1], parsedStatus[2], parsedStatus[3], parsedStatus[4], parsedStatus[5], parsedStatus[6], parsedStatus[7], parsedStatus[8], parsedStatus[9]);
+        return new GameServer(ip.x, ip.y, parsedStatus[0], parsedStatus[1], parsedStatus[2], parsedStatus[3], parsedStatus[4], parsedStatus[5], parsedStatus[6], parsedStatus[7], parsedStatus[8], parsePlayers(serverStatus));
     }   
+    
+    private static List<Player> parsePlayers(String[] serverStatus) {
+        List<Player> players = new ArrayList<>();
+        
+        for (String s : serverStatus) {
+            if (s.matches("-?[0-9]+ [0-9]+ \".*\"")) players.add(playerFromStatus(s));
+        }
+        
+        return players;
+    }
+    
+    private static Player playerFromStatus(String lineToParse) {
+        String[] pieces = lineToParse.split(" ");
+        return new Player(addHTMLColorTags(lineToParse.substring(lineToParse.indexOf("\""), lineToParse.lastIndexOf("\""))).replaceAll("\"", "").replaceAll("\\^[a-z]", ""), pieces[0], pieces[1]);
+    }
         
     private static String[] parseStatus(String[] array) {       
         String[] parsedStatus = new String[10];
@@ -69,9 +87,7 @@ public class ServerStatusParser {
                 case "ping":
                     parsedStatus[8] = serverStatus[i+1];
             }
-            parsedStatus[5] = Integer.toString(array.length - 3);
-            parsedStatus[9] = countPlayers(array);
-            
+            parsedStatus[5] = Integer.toString(array.length - 3);            
         }
         
         return parsedStatus;
@@ -80,13 +96,5 @@ public class ServerStatusParser {
     
     private static String addHTMLColorTags(String s) {
         return ColorTagger.htmlize(s);
-    }
-    
-    private static String countPlayers(String[] array) {
-        int c = 0;
-        for (String s : array) {           
-            if (s.matches("-?[0-9]+ ([1-9]|[0-9]{2,}) \".*\"")) c++;        
-        }
-        return Integer.toString(c);
-    }
+    }    
 }

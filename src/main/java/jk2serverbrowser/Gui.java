@@ -625,22 +625,24 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         
         table.setModel(tableModel);
     }   
-    
-    public void setupPlayerTableData(List<String> list) {
-        if (list == null) return;
+
+    public void setupPlayerTable(List<Player> players) {
+        if (players == null) return;
+        
         DefaultTableModel tableModel = (DefaultTableModel) playerTable.getModel();
-        for (String s : list) {
+        tableModel.setRowCount(0);
+        
+        for (Player p : players) {
             String[] data = new String[3];
-            String line[] = s.split(" ");
-            data[0] = ColorTagger.htmlize(s.substring(s.indexOf("\""), s.lastIndexOf("\""))).replaceAll("\"", "").replaceAll("\\^[a-z]", ""); //name
-            data[1] = line[0];
-            data[2] = line[1];
+            data[0] = p.getName();
+            data[1] = p.getScore();
+            data[2] = p.getPing();
             tableModel.addRow(data);
         }
         
         playerTable.setModel(tableModel);
     }
-
+        
     @Override
     public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
@@ -653,42 +655,16 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
             selectedServer = controller.getFavourites().get(table.convertRowIndexToModel(selectedRow));
         //System.out.println(selectedServer);
         
-        controller.getServerStatus(selectedServer).subscribe(status -> {
-            parseServerStatus(status);
-        });
+        displayServer(selectedServer);
     }
     
-    
-    private void parseServerStatus(String[] array) {
-        //mod
-        mod.setText("Mod: " +selectedServer.getMod());
-
-        //players      
-        ArrayList<String> players = new ArrayList<>();
-        for (String s : array) {
-            if (s.matches("-?[0-9]+ [0-9]+ \".*\"")) players.add(s);
-        }  
-        DefaultTableModel tableModel = (DefaultTableModel) playerTable.getModel();
-        tableModel.setRowCount(0);
-        this.setupPlayerTableData(players);                
-        
-        String strhostname = selectedServer.getHostnameNoHTML();
-        String strIp = selectedServer.getIp().toString();
-        String strForceDisable = selectedServer.getForce_disable();
-        String strWeaponDisable = selectedServer.getWeapon_disable();
-        
-        if (strhostname != null) hostname.setText("Hostname: " +strhostname);        
-        if (strIp != null) ip.setText("IP: " +strIp);
-        String no_force = "";
-        if (strForceDisable != null) {
-            if (strForceDisable.equals("163837")) no_force = " (No force)";
-            forcepowerdisable.setText("Forcepower disable: " +strForceDisable + no_force);
-        }
-        if (strWeaponDisable != null) {
-        String saberonly = "";
-            if (strWeaponDisable.equals("65531")) saberonly = " (Saber only)";
-            weapondisable.setText("Weapon disable: " +strWeaponDisable +saberonly);
-        }
+    private void displayServer(GameServer server) {
+        mod.setText("Mod: " + server.getMod());
+        hostname.setText("Hostname: " +server.getHostnameNoHTML());
+        ip.setText("Ip: " +server.getIp() + ":" +server.getPort());
+        forcepowerdisable.setText("Forcepower disable: " + server.getForce_disable() + (server.getForce_disable().equals("163837") ? " (No force)" : ""));
+        weapondisable.setText("Weapon disable: " + server.getWeapon_disable() + (server.getWeapon_disable().equals("65531") ? " (Saber only)" : ""));
+        setupPlayerTable(server.getPlayers());
     }
     
     public void destroyServerGuards() {
