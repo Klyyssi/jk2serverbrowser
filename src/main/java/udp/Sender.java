@@ -1,8 +1,6 @@
 
 package udp;
 
-<<<<<<< HEAD
-=======
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,15 +9,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
->>>>>>> udp-sender
 /**
  *
  * @author Markus Mulkahainen
  */
 public class Sender {
     
-<<<<<<< HEAD
-=======
+
     /**
      * Send message to given address
      * @param message byte array to send
@@ -50,5 +46,4 @@ public class Sender {
     private String receiveAsString(DatagramSocket server) throws IOException {   
         return new String(receive(server), "UTF-8");
     }    
->>>>>>> udp-sender
 }
