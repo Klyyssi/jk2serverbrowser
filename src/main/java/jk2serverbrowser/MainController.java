@@ -114,8 +114,8 @@ public class MainController {
         });
     }
     
-    public void joinServer(GameServer server, boolean jk2) throws IOException {
-        String path = jk2 ? settingsManager.getSetting(Setting.JK2PATH) : settingsManager.getSetting(Setting.JKAPATH);                
+    public void joinServer(GameServer server) throws IOException {
+        String path = isJk2MasterServer(masterServer) ? settingsManager.getSetting(Setting.JK2PATH) : settingsManager.getSetting(Setting.JKAPATH);                
         String strIp = server.getIp();
         ProcessBuilder builder = new ProcessBuilder( path, "+connect", strIp.substring(strIp.indexOf("/") + 1, strIp.length()) +":" +server.getPort());                
         builder.directory( new File(path.substring(0, path.lastIndexOf("/"))) );
@@ -128,15 +128,15 @@ public class MainController {
                 
         return Observable.create(subscriber -> {
             new Thread(() -> {
-                masterService.getServers(new Tuple<>(masterServer.ip, Integer.parseInt(masterServer.port)), masterServer.protocol, isOriginalLike(masterServer)).subscribe(list -> {
+                masterService.getServers(masterServerToTuple(masterServer), masterServer.protocol, isOriginalLike(masterServer)).subscribe(list -> {
                     list.parallelStream().forEach(ipTuple -> {
-                            gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
-                                if (!subscriber.isUnsubscribed()) {
-                                    GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
-                                    servers.add(server);
-                                    subscriber.onNext(server);
-                                }
-                            });                                             
+                        gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
+                            if (!subscriber.isUnsubscribed()) {
+                                GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
+                                servers.add(server);
+                                subscriber.onNext(server);
+                            }
+                        });                                             
                     });
                 });
                 
@@ -146,6 +146,18 @@ public class MainController {
             }).start();
         });
     }  
+    
+    private Tuple<String, Integer> masterServerToTuple(MasterServer masterServer) {
+        return new Tuple<>(masterServer.ip.equals("N/A") ? settingsManager.getSetting(Setting.CUSTOM_MASTERSERVER_IP) : masterServer.ip, 
+                masterServer.port.equals("N/A") ? Integer.parseInt(
+                        isJk2MasterServer(masterServer) ? 
+                                settingsManager.getSetting(Setting.CUSTOM_MASTERSV_JK2_PORT) : settingsManager.getSetting(Setting.CUSTOM_MASTERSV_JKA_PORT)) 
+                        : Integer.parseInt(masterServer.port));
+    }
+    
+    private boolean isJk2MasterServer(MasterServer masterServer) {
+        return masterServer.toString().startsWith("JK2");
+    }
     
     private boolean isOriginalLike(MasterServer masterServer) {
         List<MasterServer> originalLikeServers = new ArrayList<>();

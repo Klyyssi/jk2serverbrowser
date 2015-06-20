@@ -206,7 +206,7 @@ public class ServerGuard extends JFrame implements ActionListener {
         } 
         else if (rbtnJoin.isSelected()) {
             try {              
-                controller.joinServer(server, true);
+                controller.joinServer(server);
                 maingui.destroyServerGuards();
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null, "Couldn't find path to the game folder. Please, check your settings.ini.");
