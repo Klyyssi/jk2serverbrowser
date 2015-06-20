@@ -24,7 +24,7 @@ public class SettingsManager {
         /**
          * Map a setting to its value
          */
-	private HashMap<Setting, String> settingsMap = new HashMap<Setting, String>();	
+	private final HashMap<Setting, String> settingsMap = new HashMap<>();	
         
 	public void loadSettings(String file) {
 		File cfgFile = new File(file);

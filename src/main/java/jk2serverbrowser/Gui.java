@@ -15,16 +15,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -54,8 +46,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import rx.Subscription;
-import settings.Setting;
-import settings.SettingsManager;
 
 /**
  *
@@ -572,21 +562,21 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         Map<Tuple<JRadioButton, JRadioButton>, MasterServer> map = new HashMap<>();
         map.put(new Tuple(jk2Master, rbtns[0]), MasterServer.JK2_104_ORIGINAL);
         map.put(new Tuple(jk2Master, rbtns[1]), MasterServer.JK2_102_ORIGINAL);
-        map.put(new Tuple(jk2Master, rbtns[3]), MasterServer.JA_101_ORIGINAL);
-        map.put(new Tuple(jk2Master, rbtns[2]), MasterServer.JA_100_ORIGINAL);
+        map.put(new Tuple(jk2Master, rbtns[2]), MasterServer.JA_101_ORIGINAL);
+        map.put(new Tuple(jk2Master, rbtns[3]), MasterServer.JA_100_ORIGINAL);
         map.put(new Tuple(ounedMaster, rbtns[0]), MasterServer.JK2_104_OUNED);
         map.put(new Tuple(ounedMaster, rbtns[1]), MasterServer.JK2_102_OUNED);
-        map.put(new Tuple(ounedMaster, rbtns[3]), MasterServer.JA_101_OUNED);
-        map.put(new Tuple(ounedMaster, rbtns[2]), MasterServer.JA_100_OUNED);
+        map.put(new Tuple(ounedMaster, rbtns[2]), MasterServer.JA_101_OUNED);
+        map.put(new Tuple(ounedMaster, rbtns[3]), MasterServer.JA_100_OUNED);
         map.put(new Tuple(jkhubMaster, rbtns[0]), MasterServer.JK2_104_JKHUB);
         map.put(new Tuple(jkhubMaster, rbtns[1]), MasterServer.JK2_102_JKHUB);
-        map.put(new Tuple(jkhubMaster, rbtns[3]), MasterServer.JA_101_JKHUB);
-        map.put(new Tuple(jkhubMaster, rbtns[2]), MasterServer.JA_100_JKHUB);
+        map.put(new Tuple(jkhubMaster, rbtns[2]), MasterServer.JA_101_JKHUB);
+        map.put(new Tuple(jkhubMaster, rbtns[3]), MasterServer.JA_100_JKHUB);
         map.put(new Tuple(customMaster, rbtns[0]), MasterServer.JK2_104_CUSTOM);
         map.put(new Tuple(customMaster, rbtns[1]), MasterServer.JK2_102_CUSTOM);
-        map.put(new Tuple(customMaster, rbtns[3]), MasterServer.JA_101_CUSTOM);
-        map.put(new Tuple(customMaster, rbtns[2]), MasterServer.JA_100_CUSTOM);
-        
+        map.put(new Tuple(customMaster, rbtns[2]), MasterServer.JA_101_CUSTOM);
+        map.put(new Tuple(customMaster, rbtns[3]), MasterServer.JA_100_CUSTOM);
+                
         return map.get(selections);
     }
     

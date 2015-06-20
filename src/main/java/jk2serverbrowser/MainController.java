@@ -127,7 +127,7 @@ public class MainController {
         
         return Observable.create(subscriber -> {
             new Thread(() -> {
-                masterService.getServers(masterServer).subscribe(list -> {
+                masterService.getServers(masterServer, isOriginalLike(masterServer)).subscribe(list -> {
                     list.parallelStream().forEach(ipTuple -> {
                         if (!subscriber.isUnsubscribed()) {
                             gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
@@ -144,5 +144,15 @@ public class MainController {
                 }
             }).start();
         });
-    }    
+    }  
+    
+    private boolean isOriginalLike(MasterServer masterServer) {
+        List<MasterServer> originalLikeServers = new ArrayList<>();
+        originalLikeServers.add(MasterServer.JA_100_ORIGINAL);
+        originalLikeServers.add(MasterServer.JA_101_ORIGINAL);
+        originalLikeServers.add(MasterServer.JK2_102_ORIGINAL);
+        originalLikeServers.add(MasterServer.JK2_104_ORIGINAL);
+
+        return originalLikeServers.contains(masterServer);
+    }
 }
