@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.*;
 import rx.Observable;
 import settings.Setting;
 import settings.SettingsManager;
@@ -124,19 +125,19 @@ public class MainController {
     
     public Observable<GameServer> getNewServerList() {
         servers.clear();
-        
+                
         return Observable.create(subscriber -> {
             new Thread(() -> {
-                masterService.getServers(masterServer, isOriginalLike(masterServer)).subscribe(list -> {
+                masterService.getServers(new Tuple<>(masterServer.ip, Integer.parseInt(masterServer.port)), masterServer.protocol, isOriginalLike(masterServer)).subscribe(list -> {
                     list.parallelStream().forEach(ipTuple -> {
-                        if (!subscriber.isUnsubscribed()) {
                             gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
-                                GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
-                                servers.add(server);
-                                subscriber.onNext(server);
-                           });                      
-                        }
-                   });
+                                if (!subscriber.isUnsubscribed()) {
+                                    GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
+                                    servers.add(server);
+                                    subscriber.onNext(server);
+                                }
+                            });                                             
+                    });
                 });
                 
                 if (!subscriber.isUnsubscribed()) {
