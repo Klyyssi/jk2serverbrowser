@@ -9,8 +9,14 @@ import rx.Observable;
  */
 public interface IGameServerService {
     
-    Observable<String[]> getServerInfo(Tuple<String, Integer> ip);
+    Observable<Tuple<String[], Long>> getServerInfo(Tuple<String, Integer> ip);
     
-    Observable<String[]> getServerStatus(Tuple<String, Integer> ip);
+    /**
+     * Get server status of JK2/JKA gameserver.
+     * 
+     * @param ip gameservers ip address
+     * @return tuple of serverstatus and latency
+     */
+    Observable<Tuple<String[], Long>> getServerStatus(Tuple<String, Integer> ip);
     
 }

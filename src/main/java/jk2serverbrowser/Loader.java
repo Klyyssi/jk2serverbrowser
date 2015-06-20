@@ -3,8 +3,7 @@ package jk2serverbrowser;
 
 import javax.swing.SwingUtilities;
 import static jk2serverbrowser.Gui.createGUI;
-import jk2serverbrowser.fixtures.GameServerServiceFixtures;
-import jk2serverbrowser.fixtures.MasterServerServiceFixtures;
+import service.GameServerService;
 import service.MasterServerService;
 
 /**
