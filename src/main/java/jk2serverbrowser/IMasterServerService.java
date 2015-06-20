@@ -10,5 +10,5 @@ import rx.Observable;
  */
 public interface IMasterServerService {
     
-    Observable<List<Tuple<String, Integer>>> getServers(MasterServer masterServer);
+    Observable<List<Tuple<String, Integer>>> getServers(MasterServer masterServer, boolean originalLike);
 }
