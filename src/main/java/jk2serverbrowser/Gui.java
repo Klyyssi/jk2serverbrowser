@@ -271,7 +271,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         btnJoin.addActionListener(x -> {
             destroyServerGuards();
             try {
-                controller.joinServer(selectedServer, (rbtns[0].isSelected() || rbtns[1].isSelected())); 
+                controller.joinServer(selectedServer); 
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null, "Couldn't find path to game folder. Please, check your settings.ini.");
             }

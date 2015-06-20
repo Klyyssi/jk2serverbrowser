@@ -14,14 +14,9 @@ public enum Setting {
     SELECTED_MASTERSERVER ("0"),
     SELECTED_VERSION ("0"),
     SELECTED_BOTFILTER ("0"),         
-    CUSTOM_MASTERSERVER_IP ("93.188.162.182"), 
+    CUSTOM_MASTERSERVER_IP ("master.jkhub.org"), 
     CUSTOM_MASTERSV_JK2_PORT ("28060"), 
-    CUSTOM_MASTERSV_JKA_PORT ("29060"),
-    
-    //actual settings that are used by serverinfogetter
-    MASTERSERVER ("masterjk2.ravensoft.com"),
-    PORT ("28060"), 
-    PROTOCOL ("16");
+    CUSTOM_MASTERSV_JKA_PORT ("29060");
     
     public final String defaultValue;
     

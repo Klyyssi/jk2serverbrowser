@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import jk2serverbrowser.END_OF_FILE;
 import jk2serverbrowser.IMasterServerService;
-import jk2serverbrowser.MasterServer;
 import jk2serverbrowser.MasterServerParser;
 import jk2serverbrowser.Message;
 import jk2serverbrowser.Tuple;
@@ -24,25 +23,25 @@ public class MasterServerService implements IMasterServerService {
     private final Connection connection = new Connection();
     
     @Override
-    public Observable<List<Tuple<String, Integer>>> getServers(MasterServer masterServer, boolean originalLike) {
+    public Observable<List<Tuple<String, Integer>>> getServers(Tuple<String, Integer> ip, String protocol, boolean originalLike) {
         try (DatagramSocket server = new DatagramSocket()) {
             server.setSoTimeout(5000);
-            connection.send(server, Message.protocolToMessage(masterServer.protocol), InetAddress.getByName(masterServer.ip), Integer.parseInt(masterServer.port));
-            List<Tuple<String, Integer>> servers = getServers(masterServer, originalLike, server);
-            System.out.println(" - Masterserver " +masterServer + " listed " +servers.size() + " ip addresses");
+            connection.send(server, Message.protocolToMessage(protocol), InetAddress.getByName(ip.x), ip.y);
+            List<Tuple<String, Integer>> servers = getServers(originalLike, server);
+            System.out.println(" - Masterserver " +ip.x + ":" +ip.y + " listed " +servers.size() + " ip addresses");
             return Observable.just(servers);
         } catch (IOException ex) {
-            System.out.println(" - No response from masterserver " +masterServer.ip +":" +masterServer.port);
+            System.out.println(" - No response from masterserver " +ip.x +":" +ip.y);
         }       
         
         return Observable.just(new ArrayList<>());
     }
     
-    private List<Tuple<String, Integer>> getServers(MasterServer masterServer, boolean originalLike, DatagramSocket server) throws IOException {       
+    private List<Tuple<String, Integer>> getServers(boolean originalLike, DatagramSocket server) throws IOException {       
         Tuple<List<Tuple<String, Integer>>, END_OF_FILE> list = MasterServerParser.parseResponse(connection.receive(server));
         
         if (originalLike && list.y == END_OF_FILE.EOT) {
-            list.x.addAll(getServers(masterServer, originalLike, server));
+            list.x.addAll(getServers(originalLike, server));
         }
         
         return list.x;

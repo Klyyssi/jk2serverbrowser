@@ -56,7 +56,7 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
             if (maingui.getSelectedServer() != null) {               
                 try {
                     maingui.destroyServerGuards();
-                    controller.joinServer(maingui.getSelectedServer(), true); 
+                    controller.joinServer(maingui.getSelectedServer()); 
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(null, "Couldn't find path to game folder. Please, check your settings.ini.");
                 }
