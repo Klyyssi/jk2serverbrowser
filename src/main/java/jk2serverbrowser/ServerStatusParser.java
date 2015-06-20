@@ -13,10 +13,14 @@ public class ServerStatusParser {
     //String ip, int port, String mod, String force_disable, String weapon_disable, String gametype, String maxclients, String clients, String mapname, String hostname, String ping, String players
 
     
-    public static GameServer statusToServer(String[] serverStatus, Tuple<String, Integer> ip) {
+    public static GameServer statusToServer(String[] serverStatus, Tuple<String, Integer> ip, Long ping) {
         String[] parsedStatus = parseStatus(serverStatus);       
-        return new GameServer(ip.x, ip.y, parsedStatus[0], parsedStatus[1], parsedStatus[2], parsedStatus[3], parsedStatus[4], parsedStatus[5], parsedStatus[6], parsedStatus[7], parsedStatus[8], parsePlayers(serverStatus));
+        return new GameServer(ip.x, ip.y, parsedStatus[0], parsedStatus[1], parsedStatus[2], parsedStatus[3], parsedStatus[4], parsedStatus[5], parsedStatus[6], parsedStatus[7], Long.toString(ping), parsePlayers(serverStatus));
     }   
+    
+    public static String[] emptyServerStatus(Tuple<String, Integer> forIp) {
+        return new String[] { "getServerStatusResponse", "\\version\\JK2MP: v1.04mv linux-amd64 May 29 2015\\sv_maxclients\\0\\g_maxGameClients\\0\\g_weapondisable\\0\\g_forcePowerDisable\\0\\sv_floodProtect\\0\\sv_maxPing\\0\\sv_minPing\\0\\sv_maxRate\\100000\\sv_hostname\\"+forIp.x +"\\g_gametype\\0\\g_duelWeaponDisable\\0\\timelimit\\0\\g_needpass\\0\\mapname\\NA\\sv_privateClients\\0\\bot_minplayers\\0\\gamename\\NA", "" };
+    }
     
     private static List<Player> parsePlayers(String[] serverStatus) {
         List<Player> players = new ArrayList<>();
@@ -34,8 +38,7 @@ public class ServerStatusParser {
     }
         
     private static String[] parseStatus(String[] array) {       
-        String[] parsedStatus = new String[10];
-        
+        String[] parsedStatus = new String[10];               
         String[] serverStatus = array[1].split("\\\\");
         for (int i = 0; i < serverStatus.length; i++) {
             switch (serverStatus[i]) {
@@ -83,9 +86,6 @@ public class ServerStatusParser {
                     parsedStatus[7] = addHTMLColorTags(serverStatus[i+1].replaceAll("\\^[8-9]", "").replaceAll("[^a-zA-Z0-9?=@><#_'!&\\]\\[\\(\\)\\-\\.`~\\*\\^ ]", ""));   
                     //hostname = hostname.replaceAll("\\\\", "");
                     //hostname = addHTMLColorTags(hostname);
-                    break;
-                case "ping":
-                    parsedStatus[8] = serverStatus[i+1];
             }
             parsedStatus[5] = Integer.toString(array.length - 3);            
         }

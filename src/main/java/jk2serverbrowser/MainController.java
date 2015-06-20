@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.*;
 import rx.Observable;
 import settings.Setting;
 import settings.SettingsManager;
@@ -60,8 +59,8 @@ public class MainController {
             
             for (String s : favs) {                
                 String[] pieces = s.split(":");
-                String[] emptyServerStatus = new String[] { "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A" };
-                favourites.add(ServerStatusParser.statusToServer(emptyServerStatus, new Tuple(pieces[0], Integer.parseInt(pieces[1]))));
+                Tuple<String, Integer> ip = new Tuple<>(pieces[0], Integer.parseInt(pieces[1]));
+                favourites.add(ServerStatusParser.statusToServer(ServerStatusParser.emptyServerStatus(ip), ip, 999L));
             }
         } catch (IOException ex) {
             System.err.println(" - favourites.txt not found");
@@ -100,9 +99,9 @@ public class MainController {
         return Observable.create(subscriber -> {
             new Thread(() -> {
                 favourites.forEach(x -> {
-                    gameService.getServerStatus(new Tuple(x.getIp(), x.getPort())).subscribe(s -> {
+                    gameService.getServerStatus(new Tuple<>(x.getIp(), x.getPort())).subscribe(s -> {
                         if (!subscriber.isUnsubscribed()) {
-                            subscriber.onNext(ServerStatusParser.statusToServer((String[]) s, new Tuple(x.getIp(), x.getPort())));
+                            subscriber.onNext(ServerStatusParser.statusToServer(s.x, new Tuple<>(x.getIp(), x.getPort()), s.y));
                         }
                     });
                 });
@@ -131,8 +130,8 @@ public class MainController {
                 masterService.getServers(masterServerToTuple(masterServer), masterServer.protocol, isOriginalLike(masterServer)).subscribe(list -> {
                     list.parallelStream().forEach(ipTuple -> {
                         gameService.getServerStatus(ipTuple).subscribe(serverStatus -> {
-                            if (!subscriber.isUnsubscribed()) {
-                                GameServer server = ServerStatusParser.statusToServer(serverStatus, ipTuple);
+                            if (!subscriber.isUnsubscribed()) {                               
+                                GameServer server = ServerStatusParser.statusToServer(serverStatus.x.length < 3 ? ServerStatusParser.emptyServerStatus(ipTuple) : serverStatus.x, ipTuple, serverStatus.y);
                                 servers.add(server);
                                 subscriber.onNext(server);
                             }
