@@ -14,7 +14,7 @@ public class Loader {
 
     public static void main(String[] args) {
         
-        MainController controller = new MainController(new MasterServerService(), new GameServerServiceFixtures());
+        MainController controller = new MainController(new MasterServerService(), new GameServerService());
         controller.loadSettings();
         
         
