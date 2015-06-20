@@ -1,6 +1,7 @@
 
 package jk2serverbrowser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -28,16 +29,16 @@ public class GameServer {
     public GameServer(String ip, int port, String mod, String force_disable, String weapon_disable, String gametype, String maxclients, String clients, String mapname, String hostname, String ping, List<Player> players) {
         this.ip = ip;
         this.port = port;
-        this.mod = mod;
-        this.force_disable = force_disable;
-        this.weapon_disable = weapon_disable;
-        this.gametype = gametype;
-        this.maxclients = maxclients;
-        this.clients = clients;
-        this.mapname = mapname;
-        this.hostname = hostname;
-        this.ping = ping;
-        this.players = players;
+        this.mod = mod != null ? mod : "";
+        this.force_disable = force_disable != null ? force_disable : "";
+        this.weapon_disable = weapon_disable != null ? weapon_disable : "";
+        this.gametype = gametype != null ? gametype : "";
+        this.maxclients = maxclients != null ? maxclients : "";
+        this.clients = clients != null ? clients : "";
+        this.mapname = mapname != null ? mapname : "";
+        this.hostname = hostname != null ? hostname : "";
+        this.ping = ping != null ? ping : "999";
+        this.players = players != null ? players : new ArrayList<>();
     }
     
     @Override
