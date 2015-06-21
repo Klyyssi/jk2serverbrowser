@@ -481,7 +481,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                                         String ping = (String) getModel().getValueAt(modelRow, 2);
                                         c.setBackground(new java.awt.Color(180,180,180));
                                         if (!ping.equals("0")) c.setBackground(new java.awt.Color(118, 192, 16));
-					if (type.toLowerCase().contains("grenixal")) c.setBackground(new java.awt.Color(219, 219, 0));                                                                         
+					if (ColorTagger.deHtmlize(type.toLowerCase()).contains("grenixal")) c.setBackground(new java.awt.Color(219, 219, 0));                                                                         
 				}
 
 				return c;

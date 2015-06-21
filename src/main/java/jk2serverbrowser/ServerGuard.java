@@ -125,7 +125,7 @@ public class ServerGuard extends JFrame implements ActionListener {
                                 if (!ping.equals("0")) { 
                                     c.setBackground(Color.green);
                                 }
-                                if (type.toLowerCase().contains("grenixal")) c.setBackground(Color.yellow);    
+                                if (ColorTagger.deHtmlize(type.toLowerCase()).contains("grenixal")) c.setBackground(Color.yellow);    
                             }
 
                             return c;
@@ -150,7 +150,6 @@ public class ServerGuard extends JFrame implements ActionListener {
     }    
     
     public void destroy() {
-        //It's weird... JFrame is still alive even we kill it
         timer.stop();
         this.dispose();
     }
@@ -167,20 +166,14 @@ public class ServerGuard extends JFrame implements ActionListener {
             }
         }
     
-    /**
-     * Contacts the guarded server using ServerBrowser, updates the the playerlist, and if someone has joined,
-     * makes the requisite actions.
-     */
     private void refreshServer() {
-        controller.getServerStatus(server).subscribe(x -> {
-            ArrayList<String> playerList = parsePlayers(x);
-
+        controller.refresh(server).subscribe(x -> {           
             //Clear the table
             DefaultTableModel tableModel = (DefaultTableModel) playertable.getModel();
             tableModel.setRowCount(0);
             //
 
-            setupPlayerTableData(playerList); 
+            setupPlayerTableData(x.getPlayers()); 
             oldPlayerCount = playerCount;
             playerCount = playertable.getRowCount();
             if (!firstTime && (playerCount - oldPlayerCount > 0))
@@ -218,33 +211,18 @@ public class ServerGuard extends JFrame implements ActionListener {
      * Fill the playertable with players.
      * @param list list of players
      */
-    public void setupPlayerTableData(List<String> list) {
+    public void setupPlayerTableData(List<Player> list) {
         if (list == null) return;
         DefaultTableModel tableModel = (DefaultTableModel) playertable.getModel();
-        for (String s : list) {
+        for (Player p : list) {
             String[] data = new String[3];
-            String line[] = s.split(" ");
-            data[0] = s.substring(s.indexOf("\""), s.lastIndexOf("\"")).replaceAll("\"", ""); //name
-            data[1] = line[0];
-            data[2] = line[1];
+            data[0] = p.getName();
+            data[1] = p.getScore();
+            data[2] = p.getPing();
             tableModel.addRow(data);
         }
         
         playertable.setModel(tableModel);
-    }
-    
-    /**
-     * Parse servers' players from the server status-response.
-     * @param serverStatus the server status, where to parse the players from
-     * @return List of players in string representation (Score Ping "Playername")
-     */
-    private ArrayList<String> parsePlayers(String[] serverStatus) {
-        ArrayList<String> showablePlayers = new ArrayList<>();
-        for (String s : serverStatus) {
-            if (s.matches("-?[0-9]+ [0-9]+ \".*\"")) showablePlayers.add(s.replaceAll("\\^[0-9]", "").replaceAll("\\^[a-z]", ""));
-        }
-        
-        return showablePlayers;
     }
 
     @Override
