@@ -91,8 +91,10 @@ public class MainController {
         return favourites;
     }
     
-    public Observable<String[]> getServerStatus(GameServer server) {       
-        return gameService.getServerStatus(new Tuple(server.getIp(), server.getPort()));
+    public Observable<GameServer> refresh(GameServer server) {      
+        return gameService.getServerStatus(new Tuple<>(server.getIp(), server.getPort())).map(status -> {
+            return ServerStatusParser.statusToServer(status.x, new Tuple(server.getIp(), server.getPort()), status.y);
+        });
     }
     
     public Observable<GameServer> refreshFavourites() {
@@ -119,7 +121,7 @@ public class MainController {
         ProcessBuilder builder = new ProcessBuilder( path, "+connect", strIp.substring(strIp.indexOf("/") + 1, strIp.length()) +":" +server.getPort());                
         builder.directory( new File(path.substring(0, path.lastIndexOf("/"))) );
         builder.redirectErrorStream(true);
-        Process process =  builder.start();        
+        builder.start();        
     }
     
     public Observable<GameServer> getNewServerList() {

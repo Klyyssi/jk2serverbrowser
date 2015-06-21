@@ -26,4 +26,8 @@ public class ColorTagger {
         s = s +"</html>";
         return s;
     }
+    
+    public static String deHtmlize(String s) {
+        return s.replaceAll("\\<[^>]*>","");
+    }
 }
