@@ -30,4 +30,8 @@ public class ColorTagger {
     public static String deHtmlize(String s) {
         return s.replaceAll("\\<[^>]*>","");
     }
+    
+    public static String ignoreColours(String s) {
+        return s.replaceAll("\\^[0-9a-zA-Z]", "");
+    }
 }
