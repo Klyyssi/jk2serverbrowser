@@ -34,7 +34,7 @@ public class ServerStatusParser {
     
     private static Player playerFromStatus(String lineToParse) {
         String[] pieces = lineToParse.split(" ");
-        return new Player(addHTMLColorTags(lineToParse.substring(lineToParse.indexOf("\""), lineToParse.lastIndexOf("\""))).replaceAll("\"", "").replaceAll("\\^[a-z]", ""), pieces[0], pieces[1]);
+        return new Player(lineToParse.substring(lineToParse.indexOf("\""), lineToParse.lastIndexOf("\"")).replaceAll("\"", "").replaceAll("\\^[a-z]", ""), pieces[0], pieces[1]);
     }
         
     private static String[] parseStatus(String[] array) {       
@@ -83,7 +83,7 @@ public class ServerStatusParser {
                     parsedStatus[6] = serverStatus[i+1];
                     break;
                 case "sv_hostname":
-                    parsedStatus[7] = addHTMLColorTags(serverStatus[i+1].replaceAll("\\^[8-9]", "").replaceAll("[^a-zA-Z0-9?=@><#_'!&\\]\\[\\(\\)\\-\\.`~\\*\\^ ]", ""));   
+                    parsedStatus[7] = serverStatus[i+1].replaceAll("\\^[8-9]", "").replaceAll("[^a-zA-Z0-9?=@><#_'!&\\]\\[\\(\\)\\-\\.`~\\*\\^ ]", "");   
                     //hostname = hostname.replaceAll("\\\\", "");
                     //hostname = addHTMLColorTags(hostname);
             }
@@ -92,9 +92,5 @@ public class ServerStatusParser {
         
         return parsedStatus;
 
-    }
-    
-    private static String addHTMLColorTags(String s) {
-        return ColorTagger.htmlize(s);
-    }    
+    }   
 }
