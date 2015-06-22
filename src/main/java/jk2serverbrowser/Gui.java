@@ -9,8 +9,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -34,11 +32,13 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -51,13 +51,13 @@ import rx.Subscription;
  *
  * @author Markus Mulkahainen
  */
-public final class Gui extends JPanel implements ActionListener, ListSelectionListener, WindowListener {
+public final class Gui extends JPanel implements ListSelectionListener, WindowListener {
 
     public static void createGUI(MainController controller) {
-        JFrame frame = new JFrame("JK2/JKA server browser");
+        JFrame frame = new JFrame("JK2/JKA Server browser");
         frame.setPreferredSize(new Dimension(1280,720));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        Gui gui = new Gui(controller);
+        Gui gui = new Gui(controller, frame);     
         gui.setOpaque(true);
         frame.addWindowListener(gui);
         frame.setContentPane(gui);
@@ -65,12 +65,16 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         frame.setVisible(true);
     }  
     
+    private final JFrame frame;
     private JTable table, playerTable;
     private final JButton btnGetServers, btnJoin;
     private GameServer selectedServer;
     private JRadioButton botfilter, emptyfilter;
     private List<ServerGuard> serverGuards = new ArrayList<>();
     private final PopupMenu popupMenu;
+    private NoneSelectedButtonGroup filtergroup;
+    private JRadioButton ounedMaster, jk2Master, jkhubMaster, customMaster, favourite, internet;   
+    private JTextField search;
    
     private Subscription refreshList;
     
@@ -80,7 +84,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
     public void windowOpened(WindowEvent e) {
         setSettings();
         changeMasterserver();
-        getNewServerList();              
+        getNewServerList();       
     }
     
     private void setSettings() {
@@ -128,7 +132,6 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                             emptyfilter.setSelected(true);  
                             break;
                     }
-                    changeFilter();
                     break;
             }
         });
@@ -187,11 +190,11 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                 return n1 - n2;
             }
         }
-    
-    private TableRowSorter sorter;
-    
-    public Gui(MainController controller) {
+        
+    public Gui(MainController controller, JFrame frame) {
         super(new BorderLayout());
+        
+        this.frame = frame;
         
         this.controller = controller;
         
@@ -215,7 +218,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
                             //c.setBackground(new java.awt.Color(50,50,50,50));
                             if (!isRowSelected(row))
                                     c.setBackground(row % 2 == 0 ? new java.awt.Color(210,210,210) : new java.awt.Color(170,170,170));                              
-                            lblServerCount.setText("Servers: " +table.getRowCount());
+                            frame.setTitle("JK2/JKA Server browser [Servers: " +table.getRowCount() + "]");
                             return c;
 			}
             @Override
@@ -224,7 +227,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
             }            
         };
         
-        sorter = new TableRowSorter(tableModel);        
+        TableRowSorter sorter = new TableRowSorter(tableModel);        
         sorter.setComparator(1, new IntComparator());      
         sorter.setComparator(5, new IntComparator());
         table.setRowSorter(sorter);
@@ -310,11 +313,11 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftpanel, rightPanel);
         splitPane.setDividerLocation(1050);
         add(splitPane);
+        
+        controller.serverSubject().subscribe(x -> {
+            this.addServerToTable(x);
+        });
     }
-    
-    private JLabel lblServerCount;
-    private NoneSelectedButtonGroup filtergroup;
-    private JRadioButton ounedMaster, jk2Master, jkhubMaster, customMaster, favourite, internet;   
     
     private JPanel createLowerPanel() {       
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 1));
@@ -328,10 +331,8 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         jk2Master.setToolTipText("Enable to use original masterjk2/3.ravensoft.com masterserver.");
         jkhubMaster = new JRadioButton("jkhub");
         jkhubMaster.setToolTipText("Enable to use master.jkhub.org");
-        jkhubMaster.addActionListener(this);
         customMaster = new JRadioButton("Custom");
         customMaster.setToolTipText("Enable to use custom masterserver options defined in settings.ini");
-        customMaster.addActionListener(this);
         
         masterservers.add(ounedMaster);
         masterservers.add(jk2Master);
@@ -346,6 +347,36 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         Border border1 = BorderFactory.createTitledBorder("Server filters - Hide:");
         Border border2 = BorderFactory.createTitledBorder("Masterserver: ");
         Border border3 = BorderFactory.createTitledBorder("Serverlist:");
+        Border border4 = BorderFactory.createTitledBorder("Search");
+        
+        JPanel searchPanel = new JPanel();
+        search = new JTextField(10);
+        
+        search.getDocument().addDocumentListener(new DocumentListener() {
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                update();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                update();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {               
+                update();
+            }
+            
+            public void update() {
+                clearTable();
+                controller.setFilter(search.getText(), botfilter.isSelected(), emptyfilter.isSelected());
+            }           
+        });
+        
+        searchPanel.add(search);
+        searchPanel.setBorder(border4);
         
         JPanel serverlistSelectionPanel = new JPanel();
         ButtonGroup serverlists = new ButtonGroup();
@@ -380,24 +411,30 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         emptyfilter = new JRadioButton("Empty servers");
         filtergroup.add(botfilter);
         filtergroup.add(emptyfilter);
-        jk2Master.addActionListener(this);
-        ounedMaster.addActionListener(this);
-        botfilter.addActionListener(this);
-        emptyfilter.addActionListener(this);
-        lblServerCount = new JLabel("");      
-        lblServerCount.setBorder(new EmptyBorder(0,0,0,20));
+        jk2Master.addActionListener(x ->  changeMasterserver());
+        ounedMaster.addActionListener(x -> changeMasterserver());
+        jkhubMaster.addActionListener(x -> changeMasterserver());
+        customMaster.addActionListener(x -> changeMasterserver());
+        
+        botfilter.addActionListener(x -> {
+            clearTable();
+            controller.setFilter(search.getText(), botfilter.isSelected(), emptyfilter.isSelected());
+        });
+        
+        emptyfilter.addActionListener(x -> { 
+            clearTable();
+            controller.setFilter(search.getText(), botfilter.isSelected(), emptyfilter.isSelected());
+        });
+        
         filterpanel.add(botfilter);
         filterpanel.add(emptyfilter);
-        filterpanel.setBorder(border1);       
+        filterpanel.setBorder(border1);  
+        
         panel.add(filterpanel);
         panel.add(masterserverPanel);
         panel.add(serverlistSelectionPanel);
-        panel.add(lblServerCount);
+        panel.add(searchPanel);
         return panel;
-    }
-    
-    private void addActionListeners(JButton btn) {
-        btn.addActionListener(this);
     }
     
     private JLabel hostname, mod, ip, forcepowerdisable, weapondisable;
@@ -431,6 +468,12 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         rbtns[2].setToolTipText("Find servers for Jedi Knight 3 Jedi Academy version 1.01");
         rbtns[3].setToolTipText("Find servers for Jedi Knight 3 Jedi Academy version 1.00");
         
+        rbtns[0].addActionListener(x -> changeMasterserver());
+        rbtns[1].addActionListener(x -> changeMasterserver());
+        rbtns[2].addActionListener(x -> changeMasterserver());
+        rbtns[3].addActionListener(x -> changeMasterserver());
+
+        
         JPanel rdbtnPanel = new JPanel(new GridLayout(0,1));
         JPanel jk2panel = new JPanel(new GridLayout(0,2));
         JPanel jkapanel = new JPanel(new GridLayout(0,2));     
@@ -450,10 +493,6 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         jk2panel.add(rbtns[1]);
         jkapanel.add(rbtns[2]);
         jkapanel.add(rbtns[3]);
-        rbtns[0].addActionListener(this);
-        rbtns[1].addActionListener(this);
-        rbtns[3].addActionListener(this);
-        rbtns[2].addActionListener(this);
         
         rbtns[0].setActionCommand("JK2_104");
         rbtns[1].setActionCommand("JK2_102");
@@ -518,46 +557,15 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
     }
     
     private void getNewServerList() {
-        clearTable();
-        
         if (refreshList != null) {
             refreshList.unsubscribe();
         }
-
-        refreshList = controller.getNewServerList().subscribe(x -> {
-            addServerToTable(x);
-        });
-
-    }
-    
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        Object o = e.getSource();
         
-        if (o instanceof JRadioButton) {
-            JRadioButton btn = (JRadioButton) o;  
-            
-            if (btn.getText().startsWith("Empty")) {
-                changeFilter();           
-            } else {
-                changeMasterserver();
-            }         
-        }
+        clearTable();
+
+        refreshList = controller.getNewServerList().subscribe();  
     }
-   
-    private void changeFilter() {
-        if (botfilter.isSelected()) {
-            RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("\\[([1-9]|[0-9]{2,})\\]", 1);
-            sorter.setRowFilter(rf);
-        }  
-        else if (emptyfilter.isSelected()) {
-            RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("([1-9]|[0-9]{2,})/", 1);
-            sorter.setRowFilter(rf);
-        }            
-        else 
-            sorter.setRowFilter(null);        
-    }
-    
+  
     private MasterServer selectionToMasterServer(Tuple<JRadioButton, JRadioButton> selections) {
         Map<Tuple<JRadioButton, JRadioButton>, MasterServer> map = new HashMap<>();
         map.put(new Tuple(jk2Master, rbtns[0]), MasterServer.JK2_104_ORIGINAL);
@@ -605,7 +613,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
         
         Object[] data = new Object[6];
-        data[0] = s.getHostname();
+        data[0] = ColorTagger.htmlize(s.getHostname());
         data[1] = s.getClients() +"/" +s.getMaxclients() + " [" +s.getPlayerCount() + "]";
         data[2] = s.getMapname();
         data[3] = s.getGametype();
@@ -615,6 +623,23 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         
         table.setModel(tableModel);
     }   
+    
+    public synchronized void setupTableData(List<GameServer> servers) {
+        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+        
+        servers.forEach(s -> {
+            Object[] data = new Object[6];
+            data[0] = ColorTagger.htmlize(s.getHostname());
+            data[1] = s.getClients() +"/" +s.getMaxclients() + " [" +s.getPlayerCount() + "]";
+            data[2] = s.getMapname();
+            data[3] = s.getGametype();
+            data[4] = s.getMod();
+            data[5] = s.getPing();
+            tableModel.addRow(data);
+        });
+        
+        table.setModel(tableModel);
+    }
 
     public void setupPlayerTable(List<Player> players) {
         if (players == null) return;
@@ -624,7 +649,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
         
         for (Player p : players) {
             String[] data = new String[3];
-            data[0] = p.getName();
+            data[0] = ColorTagger.htmlize(p.getName());
             data[1] = p.getScore();
             data[2] = p.getPing();
             tableModel.addRow(data);
@@ -650,7 +675,7 @@ public final class Gui extends JPanel implements ActionListener, ListSelectionLi
     
     private void displayServer(GameServer server) {
         mod.setText("Mod: " + server.getMod());
-        hostname.setText("Hostname: " +server.getHostnameNoHTML());
+        hostname.setText("Hostname: " +server.getHostname());
         ip.setText("Ip: " +server.getIp() + ":" +server.getPort());
         forcepowerdisable.setText("Forcepower disable: " + server.getForce_disable() + (server.getForce_disable().equals("163837") ? " (No force)" : ""));
         weapondisable.setText("Weapon disable: " + server.getWeapon_disable() + (server.getWeapon_disable().equals("65531") ? " (Saber only)" : ""));

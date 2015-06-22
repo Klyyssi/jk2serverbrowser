@@ -65,10 +65,6 @@ public class GameServer {
     public String getHostname() {
         return hostname;
     }
-    
-    public String getHostnameNoHTML() {
-        return ColorTagger.deHtmlize(hostname);
-    }
 
     public String getIp() {
         return ip;

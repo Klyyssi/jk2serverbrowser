@@ -45,14 +45,14 @@ import javax.swing.table.TableRowSorter;
  */
 public class ServerGuard extends JFrame implements ActionListener {
     
-    private GameServer server;
-    private MainController controller;
-    private Gui maingui;
-    private JPanel mainpanel = new JPanel(new BorderLayout());
-    private JPanel bottompanel = new JPanel(new BorderLayout());
-    private JRadioButton rbtnJoin = new JRadioButton("Join server"), 
+    private final GameServer server;
+    private final MainController controller;
+    private final Gui maingui;
+    private final JPanel mainpanel = new JPanel(new BorderLayout());
+    private final JPanel bottompanel = new JPanel(new BorderLayout());
+    private final JRadioButton rbtnJoin = new JRadioButton("Join server"), 
             rbtnNotify = new JRadioButton("Sound notification");
-    private ButtonGroup btnGroup = new ButtonGroup();
+    private final ButtonGroup btnGroup = new ButtonGroup();
     private JTable playertable = new JTable();
     private boolean firstTime = true;
     private int playerCount = 0, oldPlayerCount = 0;
@@ -68,7 +68,7 @@ public class ServerGuard extends JFrame implements ActionListener {
         this.maingui = gui;
         this.controller = controller;
         this.server = server;
-        setTitle("Server guard - " +server.getHostnameNoHTML());
+        setTitle("Server guard - " +server.getHostname());
         setPreferredSize(new Dimension(640,480));
         createComponents();
         add(mainpanel);

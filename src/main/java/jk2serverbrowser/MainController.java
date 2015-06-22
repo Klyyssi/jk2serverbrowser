@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import rx.Observable;
+import rx.subjects.PublishSubject;
 import settings.Setting;
 import settings.SettingsManager;
 
@@ -21,14 +23,16 @@ import settings.SettingsManager;
  */
 public class MainController {
     
-    private final String SETTINGS_FILE = "settings.ini";   
-    private final List<GameServer> favourites = new ArrayList<>();
     private final List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());   
+    private final PublishSubject<GameServer> serverSubject = PublishSubject.create();   
+    private final List<GameServer> favourites = new ArrayList<>();
+    private final String SETTINGS_FILE = "settings.ini";   
     private final IGameServerService gameService;
-    private final IMasterServerService masterService;  
+    private final IMasterServerService masterService; 
+    
     private SettingsManager settingsManager;
     private MasterServer masterServer = MasterServer.JK2_104_ORIGINAL;    
-
+    private ServerFilter filter = ServerFilter.emptyFilter();   
     
     public MainController(IMasterServerService masterServerService, IGameServerService gameServerService) {
         masterService = masterServerService;
@@ -72,7 +76,11 @@ public class MainController {
     }
     
     public List<GameServer> getServers() {
-        return servers;
+        return servers.stream().filter(x -> filter.filter(x)).collect(Collectors.toList());
+    }
+ 
+    public Observable<GameServer> serverSubject() {
+        return serverSubject.filter(x -> filter.filter(x));
     }
     
     public void setMasterServer(MasterServer masterServer) {
@@ -85,6 +93,11 @@ public class MainController {
     
     public void removeFromFavourites(GameServer server) {
         favourites.remove(server);
+    }
+    
+    public void setFilter(String key, boolean noBotsAndEmpty, boolean noEmpty) {
+        filter = new ServerFilter(key, noBotsAndEmpty, noEmpty);
+        servers.forEach(server -> serverSubject.onNext(server));
     }
     
     public List<GameServer> getFavourites() {
@@ -126,7 +139,7 @@ public class MainController {
     
     public Observable<GameServer> getNewServerList() {
         servers.clear();
-                
+        
         return Observable.create(subscriber -> {
             new Thread(() -> {
                 masterService.getServers(masterServerToTuple(masterServer), masterServer.protocol, isOriginalLike(masterServer)).subscribe(list -> {
@@ -135,7 +148,7 @@ public class MainController {
                             if (!subscriber.isUnsubscribed()) {                               
                                 GameServer server = ServerStatusParser.statusToServer(serverStatus.x.length < 3 ? ServerStatusParser.emptyServerStatus(ipTuple) : serverStatus.x, ipTuple, serverStatus.y);
                                 servers.add(server);
-                                subscriber.onNext(server);
+                                serverSubject.onNext(server);
                             }
                         });                                             
                     });
