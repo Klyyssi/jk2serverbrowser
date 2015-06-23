@@ -98,7 +98,9 @@ public class MenuBar extends JMenuBar {
         //about
         JMenuItem about = new JMenuItem("About", KeyEvent.VK_A);
         about.addActionListener(x -> { 
-            JOptionPane.showMessageDialog(parent, "This Jedi Knight 2 / Jedi Academy server browser was created by Grenixal. \nThanks also to Incubo, who has contributed to this project. \n \nIn case you get new ideas or want to report bugs, contact me at \ngrennybear@hotmail.com",
+            JOptionPane.showMessageDialog(parent, "This Jedi Knight 2 / Jedi Academy server browser was created by Grenixal. "
+                    + "\nThanks also to Incubo, who has contributed to this project. \n \n"
+                    + "In case you get new ideas or you would like to report bugs, please contact me at \ngrennybear@hotmail.com",
                     "About", JOptionPane.NO_OPTION);
         });
         help.add(about);
