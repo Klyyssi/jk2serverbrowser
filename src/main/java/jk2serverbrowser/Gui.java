@@ -58,7 +58,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         Gui gui = new Gui(controller, frame);     
         gui.setOpaque(true);
-        frame.setJMenuBar(new MenuBar(frame));
+        frame.setJMenuBar(new MenuBar(frame, controller));
         frame.addWindowListener(gui);
         frame.setContentPane(gui);
         frame.pack();
