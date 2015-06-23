@@ -118,7 +118,7 @@ public class MenuBar extends JMenuBar {
     private String tryJoinServer(String ip) {
         try {
             String[] pieces = ip.split(":");
-            if (pieces.length != 2 || pieces[0].split(".").length != 4) return "IP address was not in correct format";
+            if (pieces.length != 2 || pieces[0].split("\\.").length != 4) return "IP address was not in correct format";
             Tuple<String, Integer> ipTuple = new Tuple<>(pieces[0], Integer.parseInt(pieces[1]));
             controller.joinServer(ServerStatusParser.statusToServer(ServerStatusParser.emptyServerStatus(ipTuple), ipTuple, 999L));
         } catch (IOException ex) {
