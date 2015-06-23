@@ -36,7 +36,6 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -59,6 +58,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         Gui gui = new Gui(controller, frame);     
         gui.setOpaque(true);
+        frame.setJMenuBar(new MenuBar(frame));
         frame.addWindowListener(gui);
         frame.setContentPane(gui);
         frame.pack();
