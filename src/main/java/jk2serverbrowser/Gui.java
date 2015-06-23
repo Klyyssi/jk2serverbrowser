@@ -76,7 +76,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     private JRadioButton ounedMaster, jk2Master, jkhubMaster, customMaster, favourite, internet;   
     private JTextField search;
    
-    private Subscription refreshList;
+    private Subscription subscription;
     
     private MainController controller;
 
@@ -388,19 +388,24 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
         serverlistSelectionPanel.add(favourite);
         
         internet.addActionListener(x -> {
+            if (subscription != null) subscription.unsubscribe();
+            
             btnGetServers.setText("Get servers");
             popupMenu.setDeleteFavourite(false);
             clearTable();
-            getNewServerList();
+            
+            controller.showFavourites(false);
         });
         
         favourite.addActionListener(x -> {
+            if (subscription != null) subscription.unsubscribe();
+                        
             btnGetServers.setText("Refresh");
             popupMenu.setDeleteFavourite(true);
+            subscription.unsubscribe();
             clearTable();
-            controller.refreshFavourites().subscribe(server -> {
-               this.addServerToTable(server);
-            });
+            
+            controller.showFavourites(true);
         });
         
         serverlistSelectionPanel.setBorder(border3);
@@ -551,19 +556,17 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     
     public void refreshFavourites() {
         clearTable();
-        controller.refreshFavourites().subscribe(server -> {
-           addServerToTable(server); 
-        });
+        subscription = controller.refreshFavourites().subscribe();
     }
     
     private void getNewServerList() {
-        if (refreshList != null) {
-            refreshList.unsubscribe();
+        if (subscription != null) {
+            subscription.unsubscribe();
         }
         
         clearTable();
 
-        refreshList = controller.getNewServerList().subscribe();  
+        subscription = controller.getNewServerList().subscribe();  
     }
   
     private MasterServer selectionToMasterServer(Tuple<JRadioButton, JRadioButton> selections) {
@@ -675,7 +678,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     
     private void displayServer(GameServer server) {
         mod.setText("Mod: " + server.getMod());
-        hostname.setText("Hostname: " +server.getHostname());
+        hostname.setText("Hostname: " + ColorTagger.ignoreColours(server.getHostname()));
         ip.setText("Ip: " +server.getIp() + ":" +server.getPort());
         forcepowerdisable.setText("Forcepower disable: " + server.getForce_disable() + (server.getForce_disable().equals("163837") ? " (No force)" : ""));
         weapondisable.setText("Weapon disable: " + server.getWeapon_disable() + (server.getWeapon_disable().equals("65531") ? " (Saber only)" : ""));

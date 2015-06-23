@@ -25,7 +25,6 @@ public class MainController {
     
     private final List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());   
     private final PublishSubject<GameServer> serverSubject = PublishSubject.create();   
-    private final List<GameServer> favourites = new ArrayList<>();
     private final String SETTINGS_FILE = "settings.ini";   
     private final IGameServerService gameService;
     private final IMasterServerService masterService; 
@@ -33,6 +32,7 @@ public class MainController {
     private SettingsManager settingsManager;
     private MasterServer masterServer = MasterServer.JK2_104_ORIGINAL;    
     private ServerFilter filter = ServerFilter.emptyFilter();   
+    private List<GameServer> favourites = new ArrayList<>();
     
     public MainController(IMasterServerService masterServerService, IGameServerService gameServerService) {
         masterService = masterServerService;
@@ -100,6 +100,11 @@ public class MainController {
         servers.forEach(server -> serverSubject.onNext(server));
     }
     
+    public void showFavourites(boolean showFavourites) {
+        List<GameServer> list = showFavourites ? favourites : servers;
+        list.forEach(s -> serverSubject.onNext(s));
+    }
+    
     public List<GameServer> getFavourites() {
         return favourites;
     }
@@ -110,18 +115,23 @@ public class MainController {
         });
     }
     
-    public Observable<GameServer> refreshFavourites() {
+    public Observable<GameServer> refreshFavourites() {       
         return Observable.create(subscriber -> {
             new Thread(() -> {
+                List<GameServer> newFavourites = new ArrayList<>();
                 favourites.forEach(x -> {
                     gameService.getServerStatus(new Tuple<>(x.getIp(), x.getPort())).subscribe(s -> {
                         if (!subscriber.isUnsubscribed()) {
-                            subscriber.onNext(ServerStatusParser.statusToServer(s.x, new Tuple<>(x.getIp(), x.getPort()), s.y));
+                            GameServer server = ServerStatusParser.statusToServer(s.x, new Tuple<>(x.getIp(), x.getPort()), s.y);
+                            newFavourites.add(server);
+                            serverSubject.onNext(server);
                         }
                     });
                 });
                 
                 if(!subscriber.isUnsubscribed()) {
+                    //since gameservers are not mutable
+                    favourites = newFavourites;
                     subscriber.onCompleted();
                 }
             }).start();
