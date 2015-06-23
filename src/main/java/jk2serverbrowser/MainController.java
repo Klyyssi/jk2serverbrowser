@@ -95,6 +95,10 @@ public class MainController {
         favourites.remove(server);
     }
     
+    public MasterServer getSelectedMasterServer() {
+        return masterServer;
+    }
+    
     public void setFilter(String key, boolean noBotsAndEmpty, boolean noEmpty) {
         filter = new ServerFilter(key, noBotsAndEmpty, noEmpty);
         servers.forEach(server -> serverSubject.onNext(server));
