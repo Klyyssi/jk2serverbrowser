@@ -15,8 +15,18 @@ import service.MasterServerService;
 public class Loader {
 
     public static void main(String[] args) {
+        IMasterServerService masterService;
+        IGameServerService gameService;
         
-        MainController controller = new MainController(new MasterServerServiceFixtures(), new GameServerServiceFixtures());
+        if (args.length > 0 && args[0].equals("offline")) {
+            masterService = new MasterServerServiceFixtures();
+            gameService = new GameServerServiceFixtures();
+        } else {
+            masterService = new MasterServerService();
+            gameService = new GameServerService();
+        }
+        
+        MainController controller = new MainController(masterService, gameService);
         controller.loadSettings();
         
         
