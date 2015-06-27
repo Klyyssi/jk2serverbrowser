@@ -1,7 +1,10 @@
 package settings;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -61,6 +64,19 @@ public class SettingsManager {
                     SetDefaultSettings();
 		}
 	}
+        
+        public void saveSettings(String file) {
+            try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
+                writer.println("# JK2/JKA Server browser settings");
+                settingsMap.forEach((x,y) -> {
+                    writer.println(x.toString() + " = " +y);
+                });
+            
+            } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+                System.err.println(" - Couldn't save settings.");
+
+            }
+        }
         
         private void SetDefaultSettings() {
             for (Setting setting : Setting.values()) {

@@ -53,8 +53,8 @@ public enum Setting {
         Map<String, String> filters = new HashMap<>();
         
         filters.put("0", "No filters");
-        filters.put("1", "Empty");
-        filters.put("2", "Empty & Bots");
+        filters.put("2", "Empty");
+        filters.put("1", "Empty & Bots");
         
         return filters;
     }

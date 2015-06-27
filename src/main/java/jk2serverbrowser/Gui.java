@@ -140,6 +140,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     @Override
     public void windowClosing(WindowEvent e) { 
         controller.trySaveFavourites();
+        controller.saveSettings();
     }
 
     @Override

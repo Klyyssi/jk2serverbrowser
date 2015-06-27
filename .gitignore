@@ -1,3 +1,4 @@
 /target/
 *.xml
 favourites.txt
+settings.ini

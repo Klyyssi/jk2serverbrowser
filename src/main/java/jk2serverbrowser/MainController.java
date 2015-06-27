@@ -46,12 +46,10 @@ public class MainController {
     }
     
     public void trySaveFavourites() {
-        try {
-            try (PrintWriter writer = new PrintWriter("favourites.txt", "UTF-8")) {
-                for (GameServer s : favourites) {
-                    writer.println(s.getIp() +":" +s.getPort());
-                }
-            }
+        try (PrintWriter writer = new PrintWriter("favourites.txt", "UTF-8")) {
+            for (GameServer s : favourites) {
+                writer.println(s.getIp() +":" +s.getPort());
+            }           
         } catch (FileNotFoundException | UnsupportedEncodingException ex) {
             System.err.println(" - Couldn't save favourites");
         }
@@ -69,6 +67,10 @@ public class MainController {
         } catch (IOException ex) {
             System.err.println(" - favourites.txt not found");
         }
+    }
+    
+    public void saveSettings() {
+        settingsManager.saveSettings(SETTINGS_FILE);
     }
     
     public SettingsManager getSettings() {
