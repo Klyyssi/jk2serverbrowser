@@ -123,7 +123,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
                             break;
                     }
                     break;
-                case SELECTED_BOTFILTER:
+                case SELECTED_FILTER:
                     switch (y) {
                         case "1":                                
                             botfilter.setSelected(true);          

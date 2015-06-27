@@ -1,6 +1,8 @@
 
 package jk2serverbrowser;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import javax.swing.JFrame;
@@ -38,7 +40,7 @@ public class MenuBar extends JMenuBar {
         JMenuItem connect = new JMenuItem("Connect to ip", KeyEvent.VK_C);
         connect.addActionListener(x -> { 
             String input = (String) JOptionPane.showInputDialog(parent, 
-                    "eg. 123.123.123.123:28090", "Enter IP and port [" + (controller.getSelectedMasterServer().toString().startsWith("JK2") ? "JK2]" : "JKA]"), 
+                    "e.g.: 123.123.123.123:28090", "Enter IP and port [" + (controller.getSelectedMasterServer().toString().startsWith("JK2") ? "JK2]" : "JKA]"), 
                     JOptionPane.PLAIN_MESSAGE, null, null, "");
             
             if (input != null && input.length() > 0) {
@@ -83,7 +85,7 @@ public class MenuBar extends JMenuBar {
         // options
         JMenuItem options = new JMenuItem("Options", KeyEvent.VK_O);
         options.addActionListener(x -> {
-            //TODO
+            OptionsView optionsView = new OptionsView(parent, controller.getSettings());
         });
         tools.add(options);
         //
@@ -118,7 +120,7 @@ public class MenuBar extends JMenuBar {
     private String tryJoinServer(String ip) {
         try {
             String[] pieces = ip.split(":");
-            if (pieces.length != 2 || pieces[0].split("\\.").length != 4) return "IP address was not in correct format";
+            if (pieces.length != 2 || pieces[0].split("\\.").length > 4) return "IP address was not in correct format";
             Tuple<String, Integer> ipTuple = new Tuple<>(pieces[0], Integer.parseInt(pieces[1]));
             controller.joinServer(ServerStatusParser.statusToServer(ServerStatusParser.emptyServerStatus(ipTuple), ipTuple, 999L));
         } catch (IOException ex) {
