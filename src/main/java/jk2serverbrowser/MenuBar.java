@@ -68,11 +68,11 @@ public class MenuBar extends JMenuBar {
         view.setMnemonic(KeyEvent.VK_V);
         
         //log
-        JMenuItem log = new JMenuItem("Log", KeyEvent.VK_L);
-        log.addActionListener(x -> { 
-            //TODO 
+        JMenuItem rcon = new JMenuItem("Remote Console (rcon)", KeyEvent.VK_L);
+        rcon.addActionListener(x -> { 
+            RemoteConsole console = new RemoteConsole(parent);
         });
-        view.add(log);
+        view.add(rcon);
         //
         
         return view;
