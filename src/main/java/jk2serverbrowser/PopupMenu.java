@@ -1,18 +1,19 @@
 
 package jk2serverbrowser;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.IOException;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import service.RconService;
 
 /**
  * Context menu for mouse2-click on server table
  * @author Markus Mulkahainen
  */
-public class PopupMenu extends JPopupMenu implements MouseListener {
+public class PopupMenu extends JPopupMenu {
+    
+    private final JMenuItem rcon;
     private final JMenuItem join;
     private final JMenuItem guard;
     private final JMenuItem favourite;
@@ -24,35 +25,16 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
         this.controller = controller;
         maingui = gui;
         join = new JMenuItem("Join server");
+        rcon = new JMenuItem("Remote console");
         guard = new JMenuItem("Add server guard");
         favourite = new JMenuItem("Add to favourites");
         deleteFavourite = new JMenuItem("Delete favourite");
         deleteFavourite.setEnabled(false);
-        join.addMouseListener(this);
-        guard.addMouseListener(this);   
-        favourite.addMouseListener(this);
-        deleteFavourite.addMouseListener(this);
-        add(join);
-        add(favourite);
-        add(guard);
-        add(deleteFavourite);
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        if (e == null || !(e.getSource() instanceof JMenuItem)) return;
-        JMenuItem clicked = (JMenuItem) e.getSource();
-        if (clicked == guard) {
-            newServerGuard();
-        } else if (clicked == join) {
+        
+        rcon.addActionListener(x -> {
+            RemoteConsole console = new RemoteConsole(gui.getParent(), new RemoteConsoleController(new RconService()), gui.getSelectedServer().getIp(), Integer.toString(gui.getSelectedServer().getPort()));
+        });
+        join.addActionListener(x -> {
             if (maingui.getSelectedServer() != null) {               
                 try {
                     maingui.destroyServerGuards();
@@ -61,21 +43,24 @@ public class PopupMenu extends JPopupMenu implements MouseListener {
                     JOptionPane.showMessageDialog(null, "Couldn't find path to game folder. Please, check your settings.ini.");
                 }
             }
-        } else if (clicked == favourite) {
+        });
+        guard.addActionListener(x -> {
+            newServerGuard();
+        });
+        favourite.addActionListener(x -> {
             controller.addToFavourites(maingui.getSelectedServer());
-        } else if (clicked == deleteFavourite) {
+        });
+        deleteFavourite.addActionListener(x -> {
             controller.removeFromFavourites(maingui.getSelectedServer());
             maingui.refreshFavourites();
-        }
+        });
+        
+        add(join);
+        add(favourite);
+        add(rcon);
+        add(guard);
+        add(deleteFavourite);
     }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    } 
     
     public void setDeleteFavourite(boolean enabled) {
         deleteFavourite.setEnabled(enabled);
