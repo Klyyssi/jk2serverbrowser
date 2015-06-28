@@ -711,4 +711,8 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     public GameServer getSelectedServer() {
         return selectedServer;
     }
+    
+    public JFrame getParent() {
+        return frame;
+    }
 }
