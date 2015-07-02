@@ -71,7 +71,7 @@ public class MenuBar extends JMenuBar {
         //rcon
         JMenuItem rcon = new JMenuItem("Remote Console (rcon)", KeyEvent.VK_L);
         rcon.addActionListener(x -> { 
-            RemoteConsole console = new RemoteConsole(parent, new RemoteConsoleController(new RconService()), null, null);
+            RemoteConsole console = new RemoteConsole(parent, controller.getRconController(), null, null);
         });
         view.add(rcon);
         //

@@ -5,13 +5,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -23,13 +16,12 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import udp.Connection;
 
 /**
  *
  * @author Markus Mulkahainen
  */
-public final class RemoteConsole extends JDialog {
+public final class RemoteConsole extends JDialog implements DocumentListener {
     
     private final RemoteConsoleController controller;
     
@@ -37,6 +29,7 @@ public final class RemoteConsole extends JDialog {
     private JTextField ip;
     private JTextField port;
     private JTextArea area;
+    private JCheckBox remember;
     
     public RemoteConsole(JFrame parent, RemoteConsoleController controller, String withIp, String withPort) {
         super(parent, "Remote Console", true);
@@ -52,6 +45,11 @@ public final class RemoteConsole extends JDialog {
         getContentPane().add(createTextArea(), BorderLayout.CENTER);
         getContentPane().add(createBottomPanel(), BorderLayout.SOUTH);
         
+        controller.containsPassword().subscribe(x -> {
+            password.setText(x.orElse(""));
+            remember.setSelected(x.isPresent());
+        });
+        
         controller.response().subscribe(response -> { 
             if (response.isEmpty()) return;
             area.append(response);
@@ -59,7 +57,9 @@ public final class RemoteConsole extends JDialog {
         
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
+        update();
         setVisible(true);
+        
     }
     
     public JPanel createBottomPanel() {
@@ -99,12 +99,23 @@ public final class RemoteConsole extends JDialog {
         JLabel label1 = new JLabel("IP:");
         ip = new JTextField(15);
         ip.setText(withIp == null ? "" : withIp);
+        ip.getDocument().addDocumentListener(this);
+        
         JLabel label2 = new JLabel("  Port:");
         port = new JTextField(5);
         port.setText(withPort == null ? "" : withPort);
+        port.getDocument().addDocumentListener(this);
+        
         JLabel label3 = new JLabel("  Password:");
         password = new JPasswordField(10);
-        JCheckBox remember = new JCheckBox("Remember password");
+        remember = new JCheckBox("Remember password");
+        remember.addActionListener(x -> { 
+            if (remember.isSelected()) {
+                controller.setPassword(new String(password.getPassword()), ip.getText() + ":" +port.getText());
+            } else {
+                controller.removePassword(ip.getText() + ":" +port.getText());
+            }
+        });
         
         panel.add(label1);
         panel.add(ip);
@@ -113,8 +124,19 @@ public final class RemoteConsole extends JDialog {
         panel.add(label3);
         panel.add(password);
         panel.add(remember);
-        
+                
         top.add(panel, BorderLayout.WEST);
         return top;
     }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) { update(); }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) { update(); }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) { update(); }
+
+    private void update() { controller.getPassword(ip.getText() + ":" +port.getText()); }
 }

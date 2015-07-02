@@ -6,7 +6,9 @@ import static jk2serverbrowser.Gui.createGUI;
 import jk2serverbrowser.fixtures.GameServerServiceFixtures;
 import jk2serverbrowser.fixtures.MasterServerServiceFixtures;
 import service.GameServerService;
+import service.IRconService;
 import service.MasterServerService;
+import service.RconService;
 
 /**
  *
@@ -17,6 +19,7 @@ public class Loader {
     public static void main(String[] args) {
         IMasterServerService masterService;
         IGameServerService gameService;
+        IRconService rconService = new RconService();
         
         if (args.length > 0 && args[0].equals("offline")) {
             masterService = new MasterServerServiceFixtures();
@@ -26,7 +29,7 @@ public class Loader {
             gameService = new GameServerService();
         }
         
-        MainController controller = new MainController(masterService, gameService);
+        MainController controller = new MainController(masterService, gameService, rconService);
         controller.loadSettings();
         
         
