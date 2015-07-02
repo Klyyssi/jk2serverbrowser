@@ -63,7 +63,7 @@ public class ServerGuard extends JFrame implements ActionListener {
         this.maingui = gui;
         this.controller = controller;
         this.server = server;
-        setTitle("Server guard - " +server.getHostname());
+        setTitle("Server guard - " +ColorTagger.ignoreColours(server.getHostname()));
         setPreferredSize(new Dimension(640,480));
         createComponents();
         add(mainpanel);
@@ -120,7 +120,7 @@ public class ServerGuard extends JFrame implements ActionListener {
                                 if (!ping.equals("0")) { 
                                     c.setBackground(Color.green);
                                 }
-                                if (ColorTagger.deHtmlize(type.toLowerCase()).contains("grenixal")) c.setBackground(Color.yellow);    
+                                if (type.toLowerCase().contains("grenixal")) c.setBackground(Color.yellow);    
                             }
 
                             return c;
@@ -211,7 +211,7 @@ public class ServerGuard extends JFrame implements ActionListener {
         DefaultTableModel tableModel = (DefaultTableModel) playertable.getModel();
         for (Player p : list) {
             String[] data = new String[3];
-            data[0] = p.getName();
+            data[0] = ColorTagger.ignoreColours(p.getName());
             data[1] = p.getScore();
             data[2] = p.getPing();
             tableModel.addRow(data);
