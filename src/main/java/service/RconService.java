@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Arrays;
+import jk2serverbrowser.ByteOperations;
 import jk2serverbrowser.Message;
 import jk2serverbrowser.Tuple;
 import rx.Observable;
@@ -24,7 +25,7 @@ public class RconService implements IRconService {
         return Observable.create(subscriber -> {
             new Thread(() -> {
                 try (DatagramSocket server = new DatagramSocket()) {
-                    connection.send(server, concat(concat(Message.RCON_PREFIX, password), command), InetAddress.getByName(ip.x), ip.y);
+                    connection.send(server, ByteOperations.concat(ByteOperations.concat(Message.RCON_PREFIX, password), command), InetAddress.getByName(ip.x), ip.y);
                     byte[] response = filter(receive(server));
                     
                     while (response.length != 0) {
@@ -66,13 +67,4 @@ public class RconService implements IRconService {
     private byte[] receive(DatagramSocket server) throws IOException {
         return connection.receive(server);
     }
-    
-    private static byte[] concat(byte[] a, byte[] b) {
-        int aLen = a.length;
-        int bLen = b.length;
-        byte[] c= new byte[aLen+bLen];
-        System.arraycopy(a, 0, c, 0, aLen);
-        System.arraycopy(b, 0, c, aLen, bLen);
-        return c;
-     }
 }

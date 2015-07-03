@@ -40,7 +40,7 @@ public class MainController {
     public MainController(IMasterServerService masterServerService, IGameServerService gameServerService, IRconService rconService) {
         masterService = masterServerService;
         gameService = gameServerService;
-        rconController = new RemoteConsoleController(new RconService());
+        rconController = new RemoteConsoleController(rconService);
     }
     
     public void loadSettings() {

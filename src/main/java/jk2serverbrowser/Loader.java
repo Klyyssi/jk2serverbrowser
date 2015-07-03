@@ -5,6 +5,7 @@ import javax.swing.SwingUtilities;
 import static jk2serverbrowser.Gui.createGUI;
 import jk2serverbrowser.fixtures.GameServerServiceFixtures;
 import jk2serverbrowser.fixtures.MasterServerServiceFixtures;
+import jk2serverbrowser.fixtures.RconFixtures;
 import service.GameServerService;
 import service.IRconService;
 import service.MasterServerService;
@@ -19,14 +20,16 @@ public class Loader {
     public static void main(String[] args) {
         IMasterServerService masterService;
         IGameServerService gameService;
-        IRconService rconService = new RconService();
+        IRconService rconService;
         
         if (args.length > 0 && args[0].equals("offline")) {
             masterService = new MasterServerServiceFixtures();
             gameService = new GameServerServiceFixtures();
+            rconService = new RconFixtures();
         } else {
             masterService = new MasterServerService();
             gameService = new GameServerService();
+            rconService = new RconService();
         }
         
         MainController controller = new MainController(masterService, gameService, rconService);
