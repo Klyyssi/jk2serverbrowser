@@ -68,7 +68,7 @@ public final class RemoteConsoleController {
     }
     
     public void send(String command, String password, String ip, int port) {
-        rconService.send(toBytes(command), toBytes(password + " "), new Tuple<>(ip, port)).subscribe(x -> {
+        rconService.send(toBytes(command), toBytes(password), new Tuple<>(ip, port)).subscribe(x -> {
             response.onNext(toString(x));
         });
     }

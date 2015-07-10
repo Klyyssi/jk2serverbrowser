@@ -25,7 +25,14 @@ public class RconService implements IRconService {
         return Observable.create(subscriber -> {
             new Thread(() -> {
                 try (DatagramSocket server = new DatagramSocket()) {
-                    connection.send(server, ByteOperations.concat(ByteOperations.concat(Message.RCON_PREFIX, password), command), InetAddress.getByName(ip.x), ip.y);
+                    connection.send(server, ByteOperations.concat(
+                            ByteOperations.concat(
+                                    ByteOperations.concat(
+                                            Message.RCON_PREFIX, password)
+                                    , new byte[] { 0x20 }), 
+                                command), 
+                            InetAddress.getByName(ip.x), ip.y);
+                    
                     byte[] response = filter(receive(server));
                     
                     while (response.length != 0) {
