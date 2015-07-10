@@ -139,8 +139,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
 
     @Override
     public void windowClosing(WindowEvent e) { 
-        controller.trySaveFavourites();
-        controller.saveSettings();
+        controller.halt();
     }
 
     @Override
@@ -710,5 +709,9 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
     
     public GameServer getSelectedServer() {
         return selectedServer;
+    }
+    
+    public JFrame getParent() {
+        return frame;
     }
 }

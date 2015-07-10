@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import rx.Observable;
 import rx.subjects.PublishSubject;
+import service.IRconService;
+import service.RconService;
 import settings.Setting;
 import settings.SettingsManager;
 
@@ -26,6 +28,7 @@ public class MainController {
     private final List<GameServer> servers = Collections.synchronizedList(new ArrayList<>());   
     private final PublishSubject<GameServer> serverSubject = PublishSubject.create();   
     private final String SETTINGS_FILE = "settings.ini";   
+    private final RemoteConsoleController rconController;
     private final IGameServerService gameService;
     private final IMasterServerService masterService; 
     
@@ -34,15 +37,22 @@ public class MainController {
     private ServerFilter filter = ServerFilter.emptyFilter();   
     private List<GameServer> favourites = new ArrayList<>();
     
-    public MainController(IMasterServerService masterServerService, IGameServerService gameServerService) {
+    public MainController(IMasterServerService masterServerService, IGameServerService gameServerService, IRconService rconService) {
         masterService = masterServerService;
         gameService = gameServerService;
+        rconController = new RemoteConsoleController(rconService);
     }
     
     public void loadSettings() {
         readFavourites();
         settingsManager = new SettingsManager();
         settingsManager.loadSettings(SETTINGS_FILE);
+    }
+    
+    public void halt() {
+        trySaveFavourites();
+        saveSettings();
+        rconController.trySaveRconPasswords();
     }
     
     public void trySaveFavourites() {
@@ -176,6 +186,10 @@ public class MainController {
             }).start();
         });
     }  
+    
+    public RemoteConsoleController getRconController() {
+        return rconController;
+    }
     
     private Tuple<String, Integer> masterServerToTuple(MasterServer masterServer) {
         return new Tuple<>(masterServer.ip.equals("N/A") ? settingsManager.getSetting(Setting.CUSTOM_MASTERSERVER_IP) : masterServer.ip, 

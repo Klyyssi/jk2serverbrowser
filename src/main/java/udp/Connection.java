@@ -56,16 +56,16 @@ public class Connection {
      * @return 
      */
     public static byte[] trim(byte[] bytes) {
-        int firstNonZero = bytes.length;
+        int lastNonZero = 0;
         
         for (int i = bytes.length - 1; i > 0; i--) {
             if (bytes[i] != 0x00) {
-                firstNonZero = i + 1;
+                lastNonZero = i + 1;
                 break;
             }          
         }
         
-        return Arrays.copyOf(bytes, firstNonZero);
+        return Arrays.copyOf(bytes, lastNonZero);
     }
     
     private String receiveAsString(DatagramSocket server) throws IOException {   

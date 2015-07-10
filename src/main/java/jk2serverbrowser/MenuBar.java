@@ -10,6 +10,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import service.RconService;
 
 /**
  *
@@ -67,12 +68,12 @@ public class MenuBar extends JMenuBar {
         JMenu view = new JMenu("View");
         view.setMnemonic(KeyEvent.VK_V);
         
-        //log
-        JMenuItem log = new JMenuItem("Log", KeyEvent.VK_L);
-        log.addActionListener(x -> { 
-            //TODO 
+        //rcon
+        JMenuItem rcon = new JMenuItem("Remote Console (rcon)", KeyEvent.VK_L);
+        rcon.addActionListener(x -> { 
+            RemoteConsole console = new RemoteConsole(parent, controller.getRconController(), null, null);
         });
-        view.add(log);
+        view.add(rcon);
         //
         
         return view;
