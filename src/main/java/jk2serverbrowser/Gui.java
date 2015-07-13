@@ -52,20 +52,20 @@ import rx.Subscription;
  */
 public final class Gui extends JPanel implements ListSelectionListener, WindowListener {
 
-    public static void createGUI(MainController controller) {
-        JFrame frame = new JFrame("JK2/JKA Server browser");
-        frame.setPreferredSize(new Dimension(1280,720));
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        Gui gui = new Gui(controller, frame);     
-        gui.setOpaque(true);
-        frame.setJMenuBar(new MenuBar(frame, controller));
-        frame.addWindowListener(gui);
-        frame.setContentPane(gui);
-        frame.pack();
-        frame.setVisible(true);
-    }  
+//    public static void createGUI(MainController controller) {
+//        JFrame frame = new JFrame("JK2/JKA Server browser");
+//        frame.setPreferredSize(new Dimension(1280,720));
+//        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+//        Gui gui = new Gui(controller, frame);     
+//        gui.setOpaque(true);
+//        frame.setJMenuBar(new MenuBar(frame, controller));
+//        frame.addWindowListener(gui);
+//        frame.setContentPane(gui);
+//        frame.pack();
+//        frame.setVisible(true);
+//    }  
     
-    private final JFrame frame;
+    //private final JFrame frame;
     private JTable table, playerTable;
     private final JButton btnGetServers, btnJoin;
     private GameServer selectedServer;
@@ -191,10 +191,10 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
             }
         }
         
-    public Gui(MainController controller, JFrame frame) {
+    public Gui(MainController controller) {
         super(new BorderLayout());
         
-        this.frame = frame;
+        //this.frame = frame;
         
         this.controller = controller;
         
@@ -218,7 +218,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
                             //c.setBackground(new java.awt.Color(50,50,50,50));
                             if (!isRowSelected(row))
                                     c.setBackground(row % 2 == 0 ? new java.awt.Color(210,210,210) : new java.awt.Color(170,170,170));                              
-                            frame.setTitle("JK2/JKA Server browser [Servers: " +table.getRowCount() + "]");
+                            //frame.setTitle("JK2/JKA Server browser [Servers: " +table.getRowCount() + "]");
                             return c;
 			}
             @Override
@@ -711,7 +711,7 @@ public final class Gui extends JPanel implements ListSelectionListener, WindowLi
         return selectedServer;
     }
     
-    public JFrame getParent() {
-        return frame;
-    }
+//    public JFrame getParent() {
+//        return frame;
+//    }
 }

@@ -32,7 +32,7 @@ public class PopupMenu extends JPopupMenu {
         deleteFavourite.setEnabled(false);
         
         rcon.addActionListener(x -> {
-            RemoteConsole console = new RemoteConsole(gui.getParent(), controller.getRconController(), gui.getSelectedServer().getIp(), Integer.toString(gui.getSelectedServer().getPort()));
+            //RemoteConsole console = new RemoteConsole(gui, controller.getRconController(), gui.getSelectedServer().getIp(), Integer.toString(gui.getSelectedServer().getPort()));
         });
         join.addActionListener(x -> {
             if (maingui.getSelectedServer() != null) {               
