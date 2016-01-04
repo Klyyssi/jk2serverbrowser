@@ -2,7 +2,7 @@
 
 Simple JK2/JKA server browser with support to multiple masterservers.
 
-[[http://thelairofmarkus.com/images/jk2.png|alt=JK2/JKA Server browser]]
+[[http://thelairofmarkus.com/images/jk2.png]]
 
 ## Contributing
 
